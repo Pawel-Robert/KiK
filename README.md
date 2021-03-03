@@ -5,7 +5,7 @@ Celem jest wytrenowanie sztucznej inteligencji za pomocą metod uczenia ze wzmoc
 
 Język: Python
 
-Biblioteki: tensorflow
+Biblioteki: tensorflow, numpy
 
 Algorytm przeszukiwania drzewa: TODO
 
