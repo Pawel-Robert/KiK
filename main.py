@@ -25,15 +25,19 @@ def choose_action(model, observation):
     # add batch dimension to the observation if only a single example was provided
     # observation = np.expand_dims(observation, axis=0) if single else observation
 
-    logits = model.predict(observation) 
-    
-    action = tf.random.categorical(logits, num_samples=1)
+    logits = model.predict(observation)
+
+    #losujemy akcję, która jest dozwolonym ruchem
+    while True:
+        action = tf.random.categorical(logits, num_samples=1)
+        if env.is_allowed_move(action):
+            break
     
     action = action.numpy().flatten()
 
     return action
 
-#klasa obiektów, które zapamiętują ruchy
+#klasa obiektów, które zapamiętują ruchy w postaci trzech list: obserwacji, akcji oraz nagród
 class Memory:
     def __init__(self):
         self.clear()
@@ -47,12 +51,8 @@ class Memory:
     # Add observations, actions, rewards to memory
     def add_to_memory(self, new_observation, new_action, new_reward):
         self.observations.append(new_observation)
-        '''TODO: update the list of actions with new action'''
-        self.actions.append(new_action)  # TODO
-        # ['''TODO''']
-        '''TODO: update the list of rewards with new reward'''
-        self.rewards.append(new_reward)  # TODO
-        # ['''TODO''']
+        self.actions.append(new_action)
+        self.rewards.append(new_reward)
 
 
 # Helper function to combine a list of Memory objects into a single Memory.
@@ -70,7 +70,7 @@ def aggregate_memories(memories):
 # Instantiate a single Memory buffer
 memory = Memory()
 
-
+# funkcja normalizująca zmienną x
 def normalize(x):
     x -= np.mean(x)
     x /= np.std(x)
