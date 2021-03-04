@@ -16,25 +16,25 @@ class KiKEnv():
 
     #spawdzamy, czy na plaszy pojawił się kształt dający zwycięstwo
     def check_win(self):
-        for i in range(self.height-5):
-            for j in range(self.width-5):
-                if compute_filter(self.board,a,b):
+        for a in range(self.height-5):
+            for b in range(self.width-5):
+                if self.compute_filter(a,b):
                     return True
         return False
 
 
 
     # sprawdzamy zwycięstwo lokalnie w kwadracie 5x5 o górnym lewym wierzchołku w pozycji (a,b)
-    def compute_filter(self.board,a,b):
+    def compute_filter(self,a,b):
         horizontal = 0
         vertical = 0
         slantwise = 0
         counter_slantwise = 0
         for n in range(5):
-            horizontal = horizontal + board[a+n,b]
-            vertical = vertical + board[a,b+n]
-            slantwise = slantwise + board[a+n,b+n]
-            counter_slantwise = counter_slantwise + board[a+4-n,b+n]
+            horizontal = horizontal + self.board[a+n,b]
+            vertical = vertical + self.board[a,b+n]
+            slantwise = slantwise + self.board[a+n,b+n]
+            counter_slantwise = counter_slantwise + self.board[a+4-n,b+n]
         if max(horizontal, vertical, slantwise, counter_slantwise) == 5:
             self.reward = 1
             return True
@@ -62,9 +62,11 @@ class KiKEnv():
 
     # funckja step
     def step(self, action):
-        self.board(action) = self.player
+        player = action[2]
+        self.board[action[0],action[1]] = player
         observation = self.board
         reward = self.reward
+        done = False
         if self.check_win():
             done = True
             reward = self.reward
@@ -72,7 +74,7 @@ class KiKEnv():
 
     # przywrócenie ustawień początkowych gry
     def reset(self):
-        self.board = np.zeros((height,))
+        self.board = np.zeros((self.height,self.width))
         self.reward = 0
         pass
 
