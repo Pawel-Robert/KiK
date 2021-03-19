@@ -11,6 +11,8 @@ Algorytm przeszukiwania drzewa: TODO
 
 Metoda uczenia: policy learning
 
+W tracie uczenia dwóch graczy gra przeciwko sobie wykorzystując sieć do wyboru sowjego ruchu. Na podstawie wyborów gracza nr 1 (oraz jego ewentulanej wygranej/porażki) aktualizujemy parametry sieci w kroku treningowym. Jeden krok treningowy odpowiada jednej rozgrywce.
+
 Architektura sieci: 
 
           Conv2D(filters=24, kernel_size=(3, 3), activation=tf.nn.relu),
