@@ -169,6 +169,7 @@ for i_episode in range(500):
                        discounted_rewards=discount_rewards(memory.rewards))
             # reset the memory
             memory.clear()
+            # TODO: trzeba też dać breaka gdy rozgrywka skończy się nieroztrzygnięta
             break
         # update our observatons
         observation = next_observation
