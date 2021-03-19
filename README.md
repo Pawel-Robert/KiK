@@ -1,5 +1,5 @@
 # KiK
-Gra w kółko i krzyżyk na dużej planszy. Gracze na przemian stawiają swoje znaki. Wygrywa ten, kto pierwszy uzyska pięć znaków w rzędzie, kolumnie bądź skośnie. Celem jest wytrenowanie sztucznej inteligencji za pomocą metod uczenia ze wzmocnieniem, która będzie ogrywała ludzi.
+Gra w kółko i krzyżyk na dużej planszy. Gracze na przemian stawiają swoje znaki. Wygrywa ten, kto pierwszy uzyska pięć znaków w rzędzie, kolumnie bądź skośnie. Celem jest wytrenowanie sztucznej inteligencji za pomocą metod uczenia ze wzmocnieniem, która będzie ogrywała ludzi. Rozmiar planszy jest regulowany parametrami width oraz height (domyślnie 10 na 10). (Dalsze rozwinięcie gry może polegać na regulacji kształtu, którego narysowanie na planszy daje wygraną.)
 
 Język: Python
 
