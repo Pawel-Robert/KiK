@@ -10,6 +10,8 @@ env = KiKEnv(height, width)
 n_actions = env.height * env.width
 
 #funkcja tworząca sieć neuronową o odpowiedniej architekturze
+# TODO: dostosować parametry sieci konwolucyjnej do rozmiarów planszy
+# TODO: na wejściu jest np.array o rozmiarach height X width - czy to dobrze będzie działać?
 def create_kik_model():
   model = tf.keras.models.Sequential([
           # na początku tworzymy kilka warstw konwolucyjnych przetwarzających planszę
@@ -31,17 +33,13 @@ def create_kik_model():
 def choose_action(model, observation):
     # add batch dimension to the observation if only a single example was provided
     # observation = np.expand_dims(observation, axis=0) if single else observation
-
     logits = model.predict(observation)
-
     #losujemy akcję, która jest dozwolonym ruchem
     while True:
         action = tf.random.categorical(logits, num_samples=1)
         if env.is_allowed_move(action):
             break
-    
     action = action.numpy().flatten()
-
     return action
 
 #klasa obiektów, które zapamiętują ruchy w postaci trzech list: obserwacji, akcji oraz nagród
@@ -62,27 +60,21 @@ class Memory:
         self.rewards.append(new_reward)
 
 
-# Funkcja pomocnicza agrgująca pamięć
+# Funkcja pomocnicza agregująca pamięć
 #     This will be very useful for batching.
+# TODO: tego chyba nigdzie nie używamy
 def aggregate_memories(memories):
     batch_memory = Memory()
-
     for memory in memories:
         for step in zip(memory.observations, memory.actions, memory.rewards):
             batch_memory.add_to_memory(*step)
-
     return batch_memory
 
 
-# Tworzymy dwie instancje klasy pamięci, po jednej dla każedego z graczy
 
-# pamięć gracza -1
-memory_0 = Memory()
-
-# pamięć gracza 1
-memory_1 = Memory()
 
 # funkcja normalizująca zmienną x
+# TODO: zrozumieć o co tu chodzi
 def normalize(x):
     x -= np.mean(x)
     x /= np.std(x)
@@ -95,6 +87,7 @@ def normalize(x):
 #   gamma: discounting factor
 # Returns:
 #   normalized discounted reward
+# TODO: to chyba nie ma sensu, bo nagroda jest tylko na końcu rozgrywki
 def discount_rewards(rewards, gamma=0.95):
     discounted_rewards = np.zeros_like(rewards)
     R = 0
@@ -102,21 +95,21 @@ def discount_rewards(rewards, gamma=0.95):
         # update the total discounted reward
         R = R * gamma + rewards[t]
         discounted_rewards[t] = R
-
     return normalize(discounted_rewards)
 
 # funkcja obliczjąca funckję straty
+# TODO: zrozumieć jak tu działa funkcja straty
 def compute_loss(logits, actions, rewards):
     neg_logprob = tf.nn.sparse_softmax_cross_entropy_with_logits(
         logits=logits, labels=actions)
-    loss = tf.reduce_mean(neg_logprob * rewards) 
+    loss = tf.reduce_mean(neg_logprob * rewards)
     return loss
 
 # funckja trenująca model na podstawie wybranej akcji oraz obserwacji
+# TODO: gdzie należy zaimplementować algorytm przeszukiwania drzewa i w jaki sposób?
 def train_step(model, optimizer, observations, actions, discounted_rewards):
   with tf.GradientTape() as tape:
       logits = model(observations)
-
       loss = compute_loss(logits, actions, discounted_rewards)
   grads = tape.gradient(loss, model.trainable_variables) 
   optimizer.apply_gradients(zip(grads, model.trainable_variables))
@@ -126,14 +119,17 @@ def train_step(model, optimizer, observations, actions, discounted_rewards):
 
 ### Trenujemy model grający w KiK ###
 
-# Learning rate and optimizer
+# ustalamy parametry uczenia: tempo oraz optymalizator
 learning_rate = 1e-3
 optimizer = tf.keras.optimizers.Adam(learning_rate)
 
-# instantiate kik agent
+# tworzymy instację modelu agenta
 kik_model = create_kik_model()
 
-# to track our progress -> funkcje z pakietu MIT
+# Tworzymy instancję klasy pamięci gracza 1
+memory = Memory()
+
+# aby śledzić postęp gry -> funkcje z pakietu MIT TODO: trzeba to ogranąć
 smoothed_reward = mdl.util.LossHistory(smoothing_factor=0.9)
 plotter = mdl.util.PeriodicPlotter(sec=2, xlabel='Iterations', ylabel='Rewards')
 
@@ -144,8 +140,7 @@ for i_episode in range(500):
 
     # Restart the environment
     observation = env.reset()
-    memory_0.clear()
-    memory_1.clear()
+    memory.clear()
 
     while True:
         # zmieniamy gracza wykonującego ruch (inwolucja graczy)
@@ -153,47 +148,27 @@ for i_episode in range(500):
         # using our observation, choose an action and take it in the environment
         raw_action = choose_action(kik_model, observation)
         # zamieniamy "surową akcję" na współrzędne pola
-        action[0] = raw_action/env.width
-        action[1] = raw_action - action[0]*env.width
+        action[0] = raw_action // env.width # bierzemy podłogę z dzielenia
+        action[1] = raw_action % env.width # reszta z dzielenia
         action[2] = player
         # posługując się naszą akcją wykonujemy krok w środowisku i zbieramy z niego informacje
         next_observation, reward, done, info = env.step(action)
-        # aktualizujemy pamięć w zależności od tego, który gracz wykonał ruch
-        if player = -1:
-            memory_0.add_to_memory(observation, action, reward)
-            # jeśli wygrał gracz numer -1
-            if done:
-                # determine total reward and keep a record of this
-                total_reward = sum(memory_0.rewards)
-                smoothed_reward.append(total_reward)
+        # aktualizujemy pamięć dla gracza nr 1
+        if player = 1:
+            memory.add_to_memory(observation, raw_action, reward) # do pamięci dodajemy tylko raw_action, a nie 3-elementową listę
+        if done:
+            # TODO: nie ma potrzeby niczego sumować, nagroda jest tylko za wygraną....
+            total_reward = sum(memory.rewards)
+            smoothed_reward.append(total_reward)
 
-                # initiate training - remember we don't know anything about how the
-                #   agent is doing until it has crashed!
-                train_step(kik_model, optimizer,
-                           observations=np.vstack(memory_0.observations),
-                           actions=np.array(memory_0.actions),
-                           discounted_rewards=discount_rewards(memory_0.rewards))
-
-                # reset the memory
-                memory_0.clear()
-                break
-        else:
-            memory_1.add_to_memory(observation, action, reward)
-            # jeśli wygrał gracz numer 1
-            if done:
-                # determine total reward and keep a record of this
-                total_reward = sum(memory_1.rewards)
-                smoothed_reward.append(total_reward)
-
-                # initiate training - remember we don't know anything about how the
-                #   agent is doing until it has crashed!
-                train_step(kik_model, optimizer,
-                           observations=np.vstack(memory_1.observations),
-                           actions=np.array(memory_1.actions),
-                        discounted_rewards=discount_rewards(memory_1.rewards))
-
-                # reset the memory
-                memory_1.clear()
-                break
+            # initiate training - remember we don't know anything about how the
+            #   agent is doing until it has crashed!
+            train_step(kik_model, optimizer,
+                       observations=np.vstack(memory.observations),
+                       actions=np.array(memory.actions),
+                       discounted_rewards=discount_rewards(memory.rewards))
+            # reset the memory
+            memory.clear()
+            break
         # update our observatons
         observation = next_observation
