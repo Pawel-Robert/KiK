@@ -10,6 +10,5 @@ class Agent:
 
 
 class MCTSAgent(Agent):
-
     def act(self, state):
         raise NotImplementedError
