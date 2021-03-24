@@ -3,14 +3,18 @@ class ExperienceBuffer:
         self.buffer_size = buffer_size
         self.sort = sort
         # Here create a data structure to store trajectories, e.g. list, dictionary etc.
+        self.observations = []
+        self.actions = []
+        self.rewards = []
 
     def add_trajectory(self, trajectory):
         """Adds trajectory to buffer"""
-        raise NotImplementedError
+        self.trajectories.append(trajectory)
 
     def prepare_training_data(self, data_size):
         """Here we calculate targets for naural networks, i.e. pairs (x, y) to train on."""
         raise NotImplementedError
 
     def clear_buffer(self):
-        raise NotImplementedError
+        self.trajectories = []
+
