@@ -5,7 +5,7 @@ Język: Python
 
 Biblioteki: tensorflow, numpy
 
-Algorytm przeszukiwania drzewa: TODO
+Algorytm przeszukiwania drzewa: MCTS
 
 Metoda uczenia: policy learning
 
