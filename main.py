@@ -7,7 +7,7 @@ winning_condition = 3
 
 env = KiKEnv(width, height, winning_condition)
 
-trajectory = env.random_play()
+# trajectory = env.random_play()
 
 # print(trajectory)
 

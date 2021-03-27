@@ -148,8 +148,9 @@ class KiKEnv():
 
             # pętla pobierania ruchu oraz sprawdzania, czy ruch jest dozwolony
             while True:
-                a = input()
-                b = input()
+                a, b = input().split()
+                # a = input()
+                # b = input()
                 if a.isnumeric() and b.isnumeric() and self.check_if_in_range(int(a),int(b)):
                     if self.is_allowed_move((int(a) - 1) + (int(b) - 1) * self.width):
                         break
