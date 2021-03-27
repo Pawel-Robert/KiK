@@ -1,10 +1,6 @@
 from copy import copy
 
 import numpy as np
-# import pygame
-# import seaborn as sns
-# import matplotlib.pyplot as plt
-#import pygame
 
 
 class KiKEnv():
@@ -38,25 +34,47 @@ class KiKEnv():
         return False
 
 
-
     # sprawdzamy zwycięstwo lokalnie w kwadracie 5x5 o górnym lewym wierzchołku w pozycji (a,b)
     def compute_filter(self,a,b):
-        horizontal = 0
-        vertical = 0
-        slantwise = 0
-        counter_slantwise = 0
-        for n in range(self.winning_condition):
-            horizontal = horizontal + self.board[a+n,b]
-            vertical = vertical + self.board[a,b+n]
-            slantwise = slantwise + self.board[a+n,b+n]
-            counter_slantwise = counter_slantwise + self.board[a+self.winning_condition-1-n,b+n]
-        if max(horizontal, vertical, slantwise, counter_slantwise) == self.winning_condition:
+
+        set_of_line_sums = set()
+        for col in range(a, a+self.winning_condition):
+            set_of_line_sums.add(sum([self.board[col][b+i] for i in range(self.winning_condition)]))
+        for row in range(b, b + self.winning_condition):
+            set_of_line_sums.add(sum([self.board[a+i][row] for i in range(self.winning_condition)]))
+
+        set_of_line_sums.add(sum([self.board[a + i][b+i] for i in range(self.winning_condition)]))
+        set_of_line_sums.add(sum([self.board[a + i][b+self.winning_condition-i-1] for i in range(self.winning_condition)]))
+
+        sum_integers = {int(val) for val in set_of_line_sums}
+
+        print(f' set = {sum_integers}')
+
+        if self.winning_condition in sum_integers:
             self.reward = 1
-            return True
-        elif min(horizontal, vertical, slantwise, counter_slantwise) == - self.winning_condition:
+        elif -self.winning_condition in sum_integers:
             self.reward = -1
-            return True
-        return False
+
+        return self.reward
+
+        #
+        # horizontal = 0
+        # vertical = 0
+        # slantwise = 0
+        # counter_slantwise = 0
+        # for n in range(self.winning_condition):
+        #     for
+        #     horizontal = horizontal + self.board[a+n,b]
+        #     vertical = vertical + self.board[a,b+n]
+        #     slantwise = slantwise + self.board[a+n,b+n]
+        #     counter_slantwise = counter_slantwise + self.board[a+self.winning_condition-1-n,b+n]
+        # if max(horizontal, vertical, slantwise, counter_slantwise) == self.winning_condition:
+        #     self.reward = 1
+        #     return True
+        # elif min(horizontal, vertical, slantwise, counter_slantwise) == - self.winning_condition:
+        #     self.reward = -1
+        #     return True
+        # return False
 
     # funkcja spawdzająca, czy wykonanie danej akcji jest poprawne, to znaczy czy pole nie jest już zajęte
     def is_allowed_move(self, action):
