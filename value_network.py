@@ -10,7 +10,7 @@ class ValueNetwork:
         else:
             model = tf.keras.models.Sequential([
                 # na początku tworzymy kilka warstw konwolucyjnych przetwarzających planszę
-                tf.keras.layers.Conv2D(filters=26, kernel_size=(3, 3), activation=tf.nn.relu, input_shape=(height, width)),
+                tf.keras.layers.Conv2D(filters=26, kernel_size=(3, 3), activation=tf.nn.relu),
                 tf.keras.layers.MaxPool2D(pool_size=(2, 2)),
                 tf.keras.layers.Conv2D(filters=36, kernel_size=(3, 3), activation=tf.nn.relu),
                 tf.keras.layers.MaxPool2D(pool_size=(2, 2)),
