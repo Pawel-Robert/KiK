@@ -1,6 +1,9 @@
 from copy import copy
 
 import numpy as np
+# import pygame
+import seaborn as sns
+import matplotlib.pyplot as plt
 #import pygame
 
 
@@ -98,7 +101,17 @@ class KiKEnv():
 
     # wypisanie aktualnego stanu gry
     def render(self):
-        print(self.board)
+        for x in range(self.board.shape[0]):
+            print('|', end='')
+            for y in range(self.board.shape[1]):
+                val = self.board[x][y]
+                if val == 1.:
+                    print(' o ', end='')
+                elif val == -1.:
+                    print(' x ', end='')
+                else:
+                    print(' . ', end='')
+            print('|')
         pass
 
     def check_if_in_range(self,a,b):
@@ -131,7 +144,7 @@ class KiKEnv():
             print()
             self.render()
             print()
-            print(f'Gracz {self.player}: podaj współrzędne pola.')
+            print('Podaj współrzędne pola.')
 
             # pętla pobierania ruchu oraz sprawdzania, czy ruch jest dozwolony
             while True:

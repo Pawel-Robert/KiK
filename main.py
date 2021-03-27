@@ -9,6 +9,6 @@ env = KiKEnv(width, height, winning_condition)
 
 trajectory = env.random_play()
 
-#print(trajectory)
+# print(trajectory)
 
 env.human_vs_human_play()
