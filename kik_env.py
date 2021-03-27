@@ -1,8 +1,9 @@
 from copy import copy
 
 import numpy as np
-#import pygame
-
+# import pygame
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 class KiKEnv():
     #metadata = {'render.modes': ['human']}
@@ -13,12 +14,11 @@ class KiKEnv():
     # pusta plansza width = 3 na heigth = 2 ma postać:
     # 0 0 0
     # 0 0 0
-    def __init__(self, width, height, winning_condition, player = 1):
+    def __init__(self, width, height, player = 1):
 
         # plasza o rozmiarach heightx width na której stawiamy na przemian znaki
         self.height = height
         self.width = width
-        self.winning_condition = winning_condition
         self.board = np.zeros((height, width))
         self.reward = 0
         # self.player to gracz aktualnie wykonujący ruch
@@ -28,8 +28,8 @@ class KiKEnv():
 
     #spawdzamy, czy na plaszy pojawił się kształt dający zwycięstwo
     def check_win(self):
-        for a in range(self.height-self.winning_condition+1):
-            for b in range(self.width-self.winning_condition+1):
+        for a in range(self.height-5):
+            for b in range(self.width-5):
                 if self.compute_filter(a,b):
                     return True
         return False
@@ -42,15 +42,15 @@ class KiKEnv():
         vertical = 0
         slantwise = 0
         counter_slantwise = 0
-        for n in range(self.winning_condition):
+        for n in range(5):
             horizontal = horizontal + self.board[a+n,b]
             vertical = vertical + self.board[a,b+n]
             slantwise = slantwise + self.board[a+n,b+n]
-            counter_slantwise = counter_slantwise + self.board[a+self.winning_condition-1-n,b+n]
-        if max(horizontal, vertical, slantwise, counter_slantwise) == self.winning_condition:
+            counter_slantwise = counter_slantwise + self.board[a+4-n,b+n]
+        if max(horizontal, vertical, slantwise, counter_slantwise) == 5:
             self.reward = 1
             return True
-        elif min(horizontal, vertical, slantwise, counter_slantwise) == - self.winning_condition:
+        elif min(horizontal, vertical, slantwise, counter_slantwise) == -5:
             self.reward = -1
             return True
         return False
@@ -98,7 +98,17 @@ class KiKEnv():
 
     # wypisanie aktualnego stanu gry
     def render(self):
-        print(self.board)
+        for x in range(self.board.shape[0]):
+            print('|', end='')
+            for y in range(self.board.shape[1]):
+                val = self.board[x][y]
+                if val == 1.:
+                    print(' o ', end='')
+                elif val == -1.:
+                    print(' x ', end='')
+                else:
+                    print(' . ', end='')
+            print('|')
         pass
 
     def check_if_in_range(self,a,b):
@@ -127,11 +137,10 @@ class KiKEnv():
         print()
         self.reset()
         while True:
-            print('Aktualny stan planszy:')
-            print()
+            print('Aktualny stan planszy: \n')
             self.render()
             print()
-            print(f'Gracz {self.player}: podaj współrzędne pola.')
+            print('Podaj współrzędne pola.')
 
             # pętla pobierania ruchu oraz sprawdzania, czy ruch jest dozwolony
             while True:
@@ -145,6 +154,7 @@ class KiKEnv():
                 else:
                     print(f'Nie ma takiego pola. Podaj dwie liczby naturalne w przedziałach 'f'(1,{self.width}) oraz (1,{self.height}) ')
 
+            plt.close()
             # wykonujemy ruch
             action = (int(a) - 1) + (int(b) - 1) * self.width
             state, reward, done, info = self.step(action)
