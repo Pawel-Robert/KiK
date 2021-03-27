@@ -1,8 +1,8 @@
 from kik_env import KiKEnv
 import numpy as np
 
-width = 10
-height = 4
+width = 6
+height = 6
 
 env = KiKEnv(width, height)
 
