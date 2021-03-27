@@ -1,13 +1,14 @@
 from kik_env import KiKEnv
 import numpy as np
 
-width = 10
-height = 4
+width = 3
+height = 3
+winning_condition = 3
 
-env = KiKEnv(width, height)
+env = KiKEnv(width, height, winning_condition)
 
-# trajectory = env.random_play()
+trajectory = env.random_play()
 
-# print(trajectory)
+#print(trajectory)
 
 env.human_vs_human_play()
