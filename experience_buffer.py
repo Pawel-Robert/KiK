@@ -8,19 +8,20 @@ class ExperienceBuffer:
         # self.trajectories = []
         self.data = [[],[]]
 
-    def add_trajectory(self, trajectory):
+    def add_trajectory(self, trajectory, alpha, gamma):
         """Adds trajectory to buffer"""
         # self.trajectories.append(trajectory)
         # lista pomocnicza
         b = []
-        gamma = 0.95
         # a = (observation, action, reward, done)
         for a in trajectory:
             if b != []:
                 # stan poprzedni
-                self.data[0].append(b[0])
-                # TODO: tu użyć równania Bellmana
-                target_Q_value = a[3] + a[1]*gamma
+                state = b[0]
+                modified_action = b[1]
+                self.data[0].append([state, modified_action])
+
+                target_Q_value = self.alfa*b[0] + (1-self.alpha)*a[0] + b[2]*self.gamma
                 self.data[1].append(target_Q_value)
             # zachowujemy do kolejnego kroku jako wartość poprzednią
             b = a

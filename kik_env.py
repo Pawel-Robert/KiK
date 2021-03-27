@@ -23,7 +23,7 @@ class KiKEnv():
         # self.player to gracz aktualnie wykonujący ruch
         # graczem rozpoczynającym grę jest gracz podany w parametrze player
         self.player = player
-        pass
+        self.q_network = None
 
     #spawdzamy, czy na plaszy pojawił się kształt dający zwycięstwo
     def check_win(self):

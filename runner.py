@@ -21,13 +21,15 @@ class Runner:
         while True:
             # agent wybiera akcję na polu jeszcze nie zajętym
             while True:
-                action = self.agent.act(observation)
+                action = self.agent.act(observation, self.env.legal_actions())
                 if self.env.is_allowed_move(action):
                     break
             # wybraną akcją wpływamy na środowiski i zbieramy obserwacje
             next_observation, reward, done, info = self.env.step(action)
             # obserwacje dodajemy do trajektorii
-            trajectory.append(observation, action, reward, done)
+            modified_action = np.zeros(env.heigth, env.width)
+            modified_action[action // env.width, action % env.width] = - env.player
+            trajectory.append(observation, modified_action, reward, done)
             if done:
                 break
             # update our observatons

@@ -4,19 +4,26 @@ import numpy as np
 
 class Agent:
     """Base class for Agent"""
-    def __init__(self, model):
+    def __init__(self, model, legal_actions):
         self.model = model
+        self.legal_actions = legal_actions
 
     def act(self, state):
         """Choose best action. Returns action"""
-        return np.argmax(self.model.predict_value(state))
+        for action in self.legal_action:
+            x = -1
+            y = self.model.predict_value(state, action)
+            if x >= y:
+                x = y
+                target_action = action
+        return target_action
 
-class EpsilonGreedyAgent(Agent):
-    def act(self, state, espilon):
-        if np.random.random() < epsilon:
-            return np.random.choice(self.num_actions)
-        else:
-            return np.argmax(model.predict(state))
+# class EpsilonGreedyAgent(Agent):
+#     def act(self, state, espilon):
+#         if np.random.random() < epsilon:
+#             return np.random.choice(self.num_actions)
+#         else:
+#             return np.argmax(model.predict(state))
 
 class MCTSAgent(Agent):
     """Use Monte Carlo rollouts to explore the game tree"""
