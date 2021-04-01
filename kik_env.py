@@ -1,6 +1,7 @@
 from copy import copy
-
+# from datetime import datetime
 import numpy as np
+import time
 
 
 class KiKEnv():
@@ -26,36 +27,54 @@ class KiKEnv():
         self.q_network = None
 
     #spawdzamy, czy na plaszy pojawił się kształt dający zwycięstwo
+    # def check_win(self):
+    #     for a in range(self.height-self.winning_condition+1):
+    #         for b in range(self.width-self.winning_condition+1):
+    #             if self.compute_filter(a,b):
+    #                 return True
+    #     return False
+
+
+
+    # sprawdzamy zwycięstwo
     def check_win(self):
-        for a in range(self.height-self.winning_condition+1):
-            for b in range(self.width-self.winning_condition+1):
-                if self.compute_filter(a,b):
+
+        #set_of_line_sums = set()
+        for col in range(self.height):
+            for row in range(self.width - self.winning_condition + 1):
+                if sum([self.board[col][row+i] for i in range(self.winning_condition)]) == self.winning_condition*self.player:
+                    #print("poziomo")
+                    return True
+        for row in range(self.width):
+            for col in range(self.height - self.winning_condition +1):
+                if sum([self.board[col+i][row] for i in range(self.winning_condition)]) == self.winning_condition*self.player:
+                    #print("pionowo")
+                    return True
+        for col  in range(self.height - self.winning_condition + 1):
+            for row in range(self.width - self.winning_condition +1):
+                if sum([self.board[col+i][row+i] for i in range(self.winning_condition)]) == self.winning_condition*self.player:
+                    #print("skosnie")
+                    return True
+        for col in range(self.height - self.winning_condition + 1):
+            for row in range(self.width - self.winning_condition + 1):
+                if sum([self.board[col+i][row +self.winning_condition-i-1] for i in range(self.winning_condition)]) == self.winning_condition*self.player:
+                    #print("antyskosnie")
                     return True
         return False
 
+        #set_of_line_sums.add(sum([self.board[a + i][b+i] for i in range(self.winning_condition)]))
+        #set_of_line_sums.add(sum([self.board[a + i][b+self.winning_condition-i-1] for i in range(self.winning_condition)]))
 
-    # sprawdzamy zwycięstwo lokalnie w kwadracie 5x5 o górnym lewym wierzchołku w pozycji (a,b)
-    def compute_filter(self,a,b):
+        # sum_integers = {int(val) for val in set_of_line_sums}
 
-        set_of_line_sums = set()
-        for col in range(a, a+self.winning_condition):
-            set_of_line_sums.add(sum([self.board[col][b+i] for i in range(self.winning_condition)]))
-        for row in range(b, b + self.winning_condition):
-            set_of_line_sums.add(sum([self.board[a+i][row] for i in range(self.winning_condition)]))
+        # print(f' set = {sum_integers}')
 
-        set_of_line_sums.add(sum([self.board[a + i][b+i] for i in range(self.winning_condition)]))
-        set_of_line_sums.add(sum([self.board[a + i][b+self.winning_condition-i-1] for i in range(self.winning_condition)]))
-
-        sum_integers = {int(val) for val in set_of_line_sums}
-
-        print(f' set = {sum_integers}')
-
-        if self.winning_condition in sum_integers:
-            self.reward = 1
-        elif -self.winning_condition in sum_integers:
-            self.reward = -1
-
-        return self.reward
+        # if self.winning_condition in sum_integers:
+        #     self.reward = 1
+        # elif -self.winning_condition in sum_integers:
+        #     self.reward = -1
+        #
+        # return self.reward
 
         #
         # horizontal = 0
@@ -91,7 +110,7 @@ class KiKEnv():
         for i in range(self.height):
             for j in range(self.width):
                 if self.board[i,j] == 0:
-                    list.append([i,j])
+                    list.append(i*self.height+j)
         return list
 
 
@@ -99,17 +118,20 @@ class KiKEnv():
     def step(self, action):
         # na podstawie numeru pola podanego w parametrze action obliczamy jego współrzędne
         y_position = action // self.width  # bierzemy podłogę z dzielenia
-        x_position = action % self.width  # reszta z dzielenia
+        x_position = action - y_position*self.width  # reszta z dzielenia
         # aktualizujemy stan planszy
         self.board[y_position, x_position] = self.player
-        state = self.board
-        reward = 0
+        self.reward = 0
         done = False
+        # now = datetime.now().time()
+        # print(f'Checking win at time = {now.strftime("%H:%M:%S")}')
         if self.check_win():
             done = True
-            reward = 1
+            self.reward = 1
         self.player = - self.player
-        return state, reward, done, {}
+
+        # print(f'Finished checking win at time = {now.strftime("%H:%M:%S")}')
+        return self.board, self.reward, done, {}
 
     # przywrócenie ustawień początkowych gry
     def reset(self):
@@ -158,6 +180,8 @@ class KiKEnv():
         print()
         self.reset()
         while True:
+            if not self.legal_actions():
+                break
             print('Aktualny stan planszy:')
             print()
             self.render()
@@ -185,7 +209,64 @@ class KiKEnv():
                     self.render()
                     print()
                     print(f'Wygrał gracz {-self.player}.')
+                    time.sleep(3)
                     break
+
+
+    def human_vs_ai_play(self, agent):
+        print()
+        print()
+        print('WITAMY W GRZE!')
+        print()
+        print('   |/ . |/ ')
+        print('   |\ | |\ ')
+        print()
+        print('Zasady gry: gracze na przemian stawiają swoje znaki na planszy. Wygrywa gracz,')
+        print('który jako pierwszy postawi pięć znaków w rzędzie, kolumnie bądź skośnie.')
+        print('Znak gracza rozpoczynającego to liczba 1, drugi gracz dysponuje liczbą -1.')
+        print(f'Plansza ma rozmiary {self.width} na {self.height}.')
+        print()
+        self.reset()
+        while True:
+            if not self.legal_actions():
+                break
+            done = False
+            if self.player == 1:
+                print('Aktualny stan planszy:')
+                print()
+                self.render()
+                print()
+                print('Podaj współrzędne pola.')
+
+                 # pętla pobierania ruchu oraz sprawdzania, czy ruch jest dozwolony
+                while True:
+                    a, b = input().split()
+                    # a = input()
+                    # b = input()
+                    if a.isnumeric() and b.isnumeric() and self.check_if_in_range(int(a), int(b)):
+                        if self.is_allowed_move((int(a) - 1) + (int(b) - 1) * self.width):
+                            break
+                        else:
+                            print('Ruch niedozwolony - pole jest zajęte! Podaj inne pole.')
+                    else:
+                        print(
+                            f'Nie ma takiego pola. Podaj dwie liczby naturalne w przedziałach 'f'(1,{self.width}) oraz (1,{self.height}) ')
+
+                # wykonujemy ruch ludzki
+                action = (int(a) - 1) + (int(b) - 1) * self.width
+                state, reward, done, info = self.step(action)
+            else:
+                # ruch AI
+                action, q_value = agent.act(self.board, self.legal_actions())
+                print(f'Komputer wykonał ruch o wartości {q_value}')
+                state, reward, done, info = self.step(action)
+            # sprawdzamy, czy ktoś już wygrał
+            if done:
+                self.render()
+                print()
+                print(f'Wygrał gracz {-self.player}.')
+                time.sleep(3)
+                break
 
     def random_play(self, moves_limit = None):
         self.reset()

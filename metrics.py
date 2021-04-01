@@ -1,10 +1,17 @@
 def trajectory_metrics(trajectory, iteration_num):
     """This function calculates all important statistics, e.g. win rate, episode length, etc."""
+    # for a in trajectory:
+    #    win_rate = sum
     raise NotImplementedError
 
 def batch_metrics(trajectory_batch, iteration_num):
     """This function calculates average metrics"""
-    raise NotImplementedError
+    wins = 0
+    for trajectory in trajectory_batch:
+        # print(trajectory[-1][3])
+        wins += trajectory[-1][3]
+    return wins/len(trajectory_batch)
+
 
 
 
