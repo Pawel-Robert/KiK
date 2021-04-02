@@ -1,9 +1,9 @@
 from experience_buffer import ExperienceBuffer
 from metrics import batch_metrics
-import numpy as np
-from datetime import datetime
+#import numpy as np
+#from datetime import datetime
 
-import multiprocessing as mp
+#import multiprocessing as mp
 
 
 
@@ -30,7 +30,7 @@ class Runner:
         while True:
             # agent wybiera akcję na polu jeszcze nie zajętym
             if self.env.legal_actions():
-                action, q_value = self.agent.act(observation, self.env.legal_actions(), self.N)
+                action, q_value = self.agent.act(observation, self.env.legal_actions(), self.N, self.env.player)
             else:
                 break
             # wybraną akcją wpływamy na środowiski i zbieramy obserwacje
@@ -38,8 +38,12 @@ class Runner:
 
             # obserwacje dodajemy do trajektorii
             trajectory.append([observation, action, q_value, reward, done])
+            trajectory.append([next_observation, 0, 0, 0, 0])
             if done:
                 break
+            # musimy do trajektorii dodać jeszcze stan ostatni planszy
+
+
             # update our observatons
             observation = next_observation
             # sprawdzmy, czy nie przekroczyliśmy limitu czasu

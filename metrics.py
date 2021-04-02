@@ -9,7 +9,7 @@ def batch_metrics(trajectory_batch, iteration_num):
     wins = 0
     for trajectory in trajectory_batch:
         # print(trajectory[-1][3])
-        wins += trajectory[-1][3]
+        wins += abs(trajectory[-2][3])
     return wins/len(trajectory_batch)
 
 

@@ -2,7 +2,7 @@
 import numpy as np
 
 class ExperienceBuffer:
-    def __init__(self, buffer_size, alpha=0.8, gamma=0.95, sort='best'):
+    def __init__(self, buffer_size, alpha=0.8, gamma=0.8, sort='best'):
         self.buffer_size = buffer_size
         self.sort = sort
         # Here create a data structure to store trajectories, e.g. list, dictionary etc.
@@ -37,9 +37,9 @@ class ExperienceBuffer:
             Q_value = 0
 
             # obliczamy wartość docelową Q dla treningu
-            # musimy propagować zwycięstwo wstecz, uwzględniając potęgi gamma
             target_Q_value = self.alpha*current[2] + (1-self.alpha)*next[2] + current[3]*self.gamma
             Q_value = np.copy(target_Q_value[0][0])
+            # print(Q_value)
 
             # aktualizujemy buffer
             self.data.append([[st_input, ac_input], Q_value])
@@ -72,7 +72,7 @@ class ExperienceBuffer:
 
 
     def clear_buffer(self):
-        self.trajectories = []
+        self.data = []
         pass
 
 

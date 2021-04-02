@@ -2,6 +2,7 @@ from copy import copy
 # from datetime import datetime
 import numpy as np
 import time
+import tensorflow as tf
 
 
 class KiKEnv():
@@ -127,7 +128,7 @@ class KiKEnv():
         # print(f'Checking win at time = {now.strftime("%H:%M:%S")}')
         if self.check_win():
             done = True
-            self.reward = 1
+            self.reward = self.player
         self.player = - self.player
 
         # print(f'Finished checking win at time = {now.strftime("%H:%M:%S")}')
@@ -139,7 +140,6 @@ class KiKEnv():
         self.reward = 0
         return self.board
 
-    # wypisanie aktualnego stanu gry
     def render(self):
         for x in range(self.board.shape[0]):
             print('|', end='')
@@ -151,6 +151,26 @@ class KiKEnv():
                     print(' x ', end='')
                 else:
                     print(' . ', end='')
+            print('|')
+        pass
+
+    # wypisanie aktualnego stanu gry
+    def q_render(self, network):
+        st = self.board.flatten()
+        st_input = np.array([st])
+        for y in range(self.board.shape[0]):
+            print('|', end='')
+            for x in range(self.board.shape[1]):
+                val = self.board[y][x]
+                if val == 1.:
+                    print(' o ', end='  ')
+                elif val == -1.:
+                    print(' x ', end='  ')
+                else:
+                    ac = np.zeros(9)
+                    ac[x+y*self.width] = 1
+                    ac_input = np.array([ac])
+                    print(round(tf.keras.backend.get_value(network.model([st_input, ac_input])[0][0]),2), end=' ')
             print('|')
         pass
 
@@ -213,7 +233,7 @@ class KiKEnv():
                     break
 
 
-    def human_vs_ai_play(self, agent):
+    def human_vs_ai_play(self, agent, network):
         print()
         print()
         print('WITAMY W GRZE!')
@@ -257,7 +277,7 @@ class KiKEnv():
                 state, reward, done, info = self.step(action)
             else:
                 # ruch AI
-                action, q_value = agent.act(self.board, self.legal_actions())
+                action, q_value = agent.act(self.board, self.legal_actions(), self.player)
                 print(f'Komputer wykonał ruch o wartości {q_value}')
                 state, reward, done, info = self.step(action)
             # sprawdzamy, czy ktoś już wygrał
