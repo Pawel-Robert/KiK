@@ -8,23 +8,29 @@ class Small_Agent:
         self.network = network
 
 
-    def act(self, state, legal_actions):
+    def act(self, state, legal_actions, player):
         """ Choose best action. Returns action and corresponding Q-value """
         st = state.flatten()
         st_imput = np.array([st])
-        max_q_value = -1
+        return_q_value = - player
         target_action = 0
         """ Search for the action with the highest Q value """
         for action in legal_actions:
             ac = np.zeros(9)
             ac[action] = 1
             ac_input = np.array([ac])
-            current_q_value = self.network.model.predict([st_imput, ac_input])
+            current_q_value = self.network.model([st_imput, ac_input])
+            """Depending ont he player we maximize or minimize the Q value of the action we choose"""
             """ Compare it the new Q-value is higher to the previously chosen one """
-            if current_q_value >= max_q_value:
-                max_q_value = current_q_value
-                target_action = action
-        return target_action, max_q_value
+            if player == 1:
+                if current_q_value >= return_q_value:
+                    return_q_value = current_q_value
+                    target_action = action
+            if player == -1:
+                if current_q_value <= return_q_value:
+                    return_q_value = current_q_value
+                    target_action = action
+        return target_action, return_q_value
 
 class Small_Agent_Explorator:
     """Base class for Agent for a 3x3 board (requires flattening of the input)"""
@@ -32,7 +38,7 @@ class Small_Agent_Explorator:
         self.network = network
         self.epsilon = epsilon
 
-    def act(self, state, legal_actions, N):
+    def act(self, state, legal_actions, N, player):
         """ Choose best action. Returns action and corresponding Q-value """
         st = state.flatten()
         st_imput = np.array([st])
@@ -41,23 +47,28 @@ class Small_Agent_Explorator:
             ac = np.zeros(9)
             ac[action] = 1
             ac_input = np.array([ac])
-            current_q_value = self.network.model.predict([st_imput, ac_input])
+            current_q_value = self.network.model([st_imput, ac_input])
             return action, current_q_value
         else:
-            max_q_value = -1
+            return_q_value = - player
             target_action = 0
             """ Search for the action with the highest Q value """
             for action in legal_actions:
                 ac = np.zeros(9)
                 ac[action] = 1
                 ac_input = np.array([ac])
-                current_q_value = self.network.model.predict([st_imput, ac_input])
+                current_q_value = self.network.model([st_imput, ac_input])
                 """ Compare it the new Q-value is higher to the previously chosen one """
-                if current_q_value >= max_q_value:
-                    max_q_value = current_q_value
-                    target_action = action
+                if player == 1:
+                    if current_q_value >= return_q_value:
+                        return_q_value = current_q_value
+                        target_action = action
+                if player == -1:
+                    if current_q_value <= return_q_value:
+                        return_q_value = current_q_value
+                        target_action = action
             # print(max_q_value)
-            return target_action, max_q_value
+            return target_action, return_q_value
 
 
 class Big_Agent():
@@ -75,7 +86,7 @@ class Big_Agent():
         for action in legal_actions:
             ac_input = np.zeros(self.height, self.width)
             ac[action // self.width, action % self.width] = 1
-            current_q_value = self.network.model.predict([state, ac_input])
+            current_q_value = self.network.model([state, ac_input])
             if current_q_value >= max_q_value:
                 max_q_value = current_q_value
                 target_action = action

@@ -4,6 +4,7 @@ from q_network import QNetwork3x3
 import numpy as np
 from runner import Runner
 from agent import Small_Agent_Explorator, Small_Agent
+from keras.models import load_model
 
 
 width = 3
@@ -19,13 +20,17 @@ runner = Runner(Small_Agent_Explorator, network, 0.1, env, 1, 10)
 #  run(n_iterations, episodes_in_batch, data_size, epochs)
 # n_iterations = number of training processes
 # episodes_in_batch = number of games played for one training
-runner.run(1, 10, 100, 1)
+runner.run(100, 2000, 100, 1)
+
+# save the result of training
+network.model.save("model_500_500_bis.h5")
+#network.model = load_model('model_50_10.h5')
 
 env.reset()
-
-#agent = Small_Agent(network)
-#while True:
-#    env.human_vs_ai_play(agent)
+#env.human_vs_human_play()
+agent = Small_Agent(network)
+while True:
+   env.human_vs_ai_play(agent, network)
 
 """ JAK UŻYĆ SIECI 3X3 """
 # st = np.zeros(9)
