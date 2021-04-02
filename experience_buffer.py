@@ -1,8 +1,9 @@
 # from numpy import random
 import numpy as np
 
+
 class ExperienceBuffer:
-    def __init__(self, buffer_size, alpha=0.8, gamma=0.8, sort='best'):
+    def __init__(self, buffer_size, alpha=0.8, gamma=0.95, sort='best'):
         self.buffer_size = buffer_size
         self.sort = sort
         # Here create a data structure to store trajectories, e.g. list, dictionary etc.
@@ -21,6 +22,7 @@ class ExperienceBuffer:
         # q_value = trajectory[2]
         # reward = trajectory[3]
         # done = trajectory[4]
+        # print(current)
         for next in trajectory[1:]:
 
             # obrabiamy trochę dane
@@ -33,14 +35,12 @@ class ExperienceBuffer:
             ac_input = np.array([ac])
 
             # aby pozbyć się problemu z kopiowaniem
-            target_Q_value = 0
             Q_value = 0
 
             # obliczamy wartość docelową Q dla treningu
-            target_Q_value = self.alpha*current[2] + (1-self.alpha)*next[2] + current[3]*self.gamma
-            Q_value = np.copy(target_Q_value[0][0])
+            Q_value = self.alpha*current[2] + (1-self.alpha)*next[2] + current[3]*self.gamma
             # print(Q_value)
-
+            # print(st_input)
             # aktualizujemy buffer
             self.data.append([[st_input, ac_input], Q_value])
 
@@ -56,18 +56,20 @@ class ExperienceBuffer:
         st = [[] for i in range(len(self.data))]
         ac = [[] for i in range(len(self.data))]
         y = np.zeros(len(self.data))
-
+        # print(self.data[0])
         # losujemy n=data_size próbek par treningowych i w odpowiednim formacie przesyłamy je dalej
         for i in range(len(self.data)):
             #sample = np.random.randint(data_size)
             #sample = i
-            st[i] = self.data[i][0][0][0]
-            ac[i] = self.data[i][0][1][0]
+            st[i] = np.copy(self.data[i][0][0][0])
+            ac[i] = np.copy(self.data[i][0][1][0])
             target_Q_value = self.data[i][1]
             y[i] = target_Q_value
         x_1 = np.stack(st)
         x_2 = np.stack(ac)
+        # print(x_1, x_2, y)
         x = [x_1, x_2]
+        # print(x,y)
         return x, y
 
 

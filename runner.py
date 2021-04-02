@@ -1,7 +1,7 @@
 from experience_buffer import ExperienceBuffer
 from metrics import batch_metrics
-#import numpy as np
-#from datetime import datetime
+from numpy import copy
+from datetime import datetime
 
 #import multiprocessing as mp
 
@@ -24,24 +24,26 @@ class Runner:
         trajectory = []
         t = 0
         self.N += 1
-        #now = datetime.now().time()
-        #print(now.strftime("%H:%M:%S"))
-        observation = self.env.reset()
+
+        observation = copy(self.env.reset())
+        #print(observation)
         while True:
             # agent wybiera akcję na polu jeszcze nie zajętym
             if self.env.legal_actions():
                 action, q_value = self.agent.act(observation, self.env.legal_actions(), self.N, self.env.player)
             else:
                 break
+            #rint(observation)
             # wybraną akcją wpływamy na środowiski i zbieramy obserwacje
             next_observation, reward, done, info = self.env.step(action)
-
+            # print(observation, next_observation)
             # obserwacje dodajemy do trajektorii
-            trajectory.append([observation, action, q_value, reward, done])
-            trajectory.append([next_observation, 0, 0, 0, 0])
+            trajectory.append([copy(observation), copy(action), copy(q_value[0][0]), copy(reward), copy(done)])
             if done:
+                # musimy do trajektorii dodać jeszcze stan ostatni planszy
+                trajectory.append([copy(next_observation), 0, 0, 0, 0])
                 break
-            # musimy do trajektorii dodać jeszcze stan ostatni planszy
+
 
 
             # update our observatons
@@ -72,9 +74,14 @@ class Runner:
         """Full RL training loop"""
         for num in range(n_iterations):
             self.buffer.clear_buffer()
-            print(f'Processing step = {num}')
+            now = datetime.now().time()
+            print(now.strftime("%H:%M:%S"))
+            print(f'Processing step = {num+1}')
             trajectory_batch = self.run_batch_of_episodes(episodes_in_batch)
-            print(f'Win rate = {batch_metrics(trajectory_batch, num)}')
+            print(f'First win rate = {batch_metrics(trajectory_batch, num)[0]}')
+            print(f'Second win rate = {batch_metrics(trajectory_batch, num)[1]}')
+            print(f'Draws = {batch_metrics(trajectory_batch, num)[2]}')
+            print(f'Average game length = {batch_metrics(trajectory_batch, num)[3]}')
             for trajectory in trajectory_batch:
                 self.buffer.add_trajectory(trajectory)
             x, y = self.buffer.prepare_training_data(data_size)
