@@ -47,7 +47,7 @@ class QNetwork3x3:
         # ostatnia warstwa dająca prawdopodobieństwa wyboru poszczególnych pól na planszy
         q_value = Dense(1)(q_value)
         self.model = Model(inputs=[input_state, input_action], outputs=[q_value])
-        self.model.compile(loss='mse', metrics=['mse', 'accuracy'])
+        self.model.compile(loss='mse', metrics=['mse'])
 
 
 
