@@ -47,7 +47,7 @@ class Small_Agent_Explorator:
             ac = np.zeros(9)
             ac[action] = 1
             ac_input = np.array([ac])
-            current_q_value = self.network.model([st_imput, ac_input])
+            current_q_value = self.network.model([st_imput, ac_input])[0][0]
             return action, current_q_value
         else:
             return_q_value = - player
@@ -57,7 +57,7 @@ class Small_Agent_Explorator:
                 ac = np.zeros(9)
                 ac[action] = 1
                 ac_input = np.array([ac])
-                current_q_value = self.network.model([st_imput, ac_input])
+                current_q_value = self.network.model([st_imput, ac_input])[0][0]
                 """ Compare it the new Q-value is higher to the previously chosen one """
                 if player == 1:
                     if current_q_value >= return_q_value:

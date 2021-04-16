@@ -2,10 +2,17 @@ from experience_buffer import ExperienceBuffer
 from metrics import batch_metrics
 from numpy import copy
 from datetime import datetime
+from joblib import Parallel, delayed
+from joblib import wrap_non_picklable_objects
+from joblib.externals.loky import set_loky_pickler
+# import dill as pickle
+# import ray
 
 #import multiprocessing as mp
 
-
+# ray.init()
+# ray.available_resources()['CPU']
+set_loky_pickler("dill")
 
 class Runner:
     def __init__(self, agent_class, network, epsilon, env, buffer_size, time_limit):
@@ -19,6 +26,9 @@ class Runner:
 
         self.buffer = ExperienceBuffer(buffer_size)
 
+    # @ray.remote
+    @delayed
+    @wrap_non_picklable_objects
     def run_one_episode(self):
         """Plays one game and returns trajectory"""
         trajectory = []
@@ -32,14 +42,20 @@ class Runner:
             if self.env.legal_actions():
                 action, q_value = self.agent.act(observation, self.env.legal_actions(), self.N, self.env.player)
             else:
+                #print(f'draw, reward = {reward}')
                 break
             #rint(observation)
             # wybraną akcją wpływamy na środowiski i zbieramy obserwacje
             next_observation, reward, done, info = self.env.step(action)
             # print(observation, next_observation)
             # obserwacje dodajemy do trajektorii
-            trajectory.append([copy(observation), copy(action), copy(q_value[0][0]), copy(reward), copy(done)])
+            # q_value = q_value/1.01
+            try:
+                trajectory.append([copy(observation), copy(action), copy(q_value), copy(reward)])
+            except:
+                print(q_value)
             if done:
+                #print(f'done, reward={reward}')
                 # musimy do trajektorii dodać jeszcze stan ostatni planszy
                 trajectory.append([copy(next_observation), 0, 0, 0, 0])
                 break
@@ -58,19 +74,12 @@ class Runner:
 
     def run_batch_of_episodes(self, n_episodes):
         """This could be parallelized to run on many cpus"""
-        #pool = mp.Pool(mp.cpu_count())
         trajectory_batch = []
-        #batch_objects = [pool.apply_async(self.run_one_episode, args=(i)) for i in range(n_episodes)]
-        #trajectory_batch = [r.get()[1] for r in batch_objects]
-        #pool.close()
-        trajectory_batch = [self.run_one_episode() for _ in range(n_episodes)]
-        #print(trajectory_batch)
-        #trajectory_batch = []
-        #result_objects = [pool.apply_async(howmany_within_range2, args=(i, row, 4, 8)) for i, row in enumerate(data)]
-        #results = [r.get()[1] for r in result_objects]
+        trajectory_batch = Parallel(n_jobs=4)(self.run_one_episode() for _ in range(n_episodes))
+        print(trajectory_batch)
         return trajectory_batch
 
-    def run(self, n_iterations, episodes_in_batch, data_size, epochs):
+    def run(self, n_iterations, episodes_in_batch, data_size, epochs, callback):
         """Full RL training loop"""
         for num in range(n_iterations):
             self.buffer.clear_buffer()
@@ -85,7 +94,10 @@ class Runner:
             for trajectory in trajectory_batch:
                 self.buffer.add_trajectory(trajectory)
             x, y = self.buffer.prepare_training_data(data_size)
-            train_metrics = self.network.model.fit(x, y, epochs)
+            if callback == None:
+                train_metrics = self.network.model.fit(x, y)
+            else:
+                train_metrics = self.network.model.fit(x, y, epochs, callbacks=[callback])
 
 
         print(f'Training finished.')

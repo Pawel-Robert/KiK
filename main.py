@@ -6,6 +6,14 @@ from runner import Runner
 from agent import Small_Agent_Explorator, Small_Agent
 from keras.models import load_model
 
+print('Podaj ilość iteracji w trakcie treningu.')
+iterations = input()
+iterations = int(iterations)
+print('Podaj ilość rozgrywek w każdej iteracji.')
+episodes = input()
+episodes = int(episodes)
+# print('Czy chcesz się połączyć z Neptunem?')
+nept = False
 
 width = 3
 height = 3
@@ -22,20 +30,20 @@ runner = Runner(Small_Agent_Explorator, network, 0.1, env, 1, 10)
 # n_iterations = number of training processes
 # episodes_in_batch = number of games played for one training
 
-nept = False
+#nept = True
 if nept:
     import neptune.new as neptune
     from neptune.new.integrations.tensorflow_keras import NeptuneCallback
     run = neptune.init(project='pawel-robert/KiK',
                        api_token='eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIzOTY4NmVmNi02ODU1LTRkOGEtYjhmZS03MzlhYmJlNzM4YzYifQ==')  # add your credentials
     neptune_cbk = NeptuneCallback(run=run, base_namespace='metrics')
-    runner.run(100, 500, 100, 1, neptune_cbk)
+    runner.run(iterations, episodes, 100, 1, neptune_cbk)
 else:
-    runner.run(100, 100, 100, 1)
+    runner.run(iterations, episodes, 100, 1, None)
 
 # save the result of training
-network.model.save("model_i=100_g=200.h5")
-#network.model = load_model('model_50_10.h5')
+network.model.save("model_i=100_g=500.h5")
+#network.model = load_model('model_i=10_g=100.h5')
 
 #env.reset()
 #env.human_vs_human_play()
