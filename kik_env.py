@@ -254,7 +254,7 @@ class KiKEnv():
             if self.player == 1:
                 print('Aktualny stan planszy:')
                 print()
-                self.render()
+                self.q_render(network)
                 print()
                 print('Podaj współrzędne pola.')
 

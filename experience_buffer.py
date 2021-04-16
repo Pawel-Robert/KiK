@@ -3,7 +3,7 @@ import numpy as np
 
 
 class ExperienceBuffer:
-    def __init__(self, buffer_size, alpha=0.8, gamma=0.95, sort='best'):
+    def __init__(self, buffer_size, alpha=0.2, gamma=0.95, sort='best'):
         self.buffer_size = buffer_size
         self.sort = sort
         # Here create a data structure to store trajectories, e.g. list, dictionary etc.
@@ -27,8 +27,12 @@ class ExperienceBuffer:
 
             # obrabiamy trochę dane
             st = current[0]
+            # TODO: zmienic przy większych planszach - nie spłaszczać
             st = st.flatten()
+            # print(st)
             st_input = np.array([st])
+            # print(st_input)
+            # TODO: zmienic przy większych planszach - powinna być tablica
             ac = np.zeros(9)
             action = current[1]
             ac[action] = 1
@@ -70,6 +74,7 @@ class ExperienceBuffer:
         # print(x_1, x_2, y)
         x = [x_1, x_2]
         # print(x,y)
+        # print(x[0],y)
         return x, y
 
 
