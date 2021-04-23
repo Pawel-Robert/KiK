@@ -2,7 +2,7 @@ from copy import copy
 # from datetime import datetime
 import numpy as np
 import time
-import tensorflow as tf
+#import tensorflow as tf
 
 
 class KiKEnv():
@@ -38,27 +38,27 @@ class KiKEnv():
 
 
     # sprawdzamy zwycięstwo
-    def check_win(self):
+    def check_win(self, board):
 
         #set_of_line_sums = set()
         for col in range(self.height):
             for row in range(self.width - self.winning_condition + 1):
-                if sum([self.board[col][row+i] for i in range(self.winning_condition)]) == self.winning_condition*self.player:
+                if sum([board[col][row+i] for i in range(self.winning_condition)]) == self.winning_condition*self.player:
                     #print("poziomo")
                     return True
         for row in range(self.width):
             for col in range(self.height - self.winning_condition +1):
-                if sum([self.board[col+i][row] for i in range(self.winning_condition)]) == self.winning_condition*self.player:
+                if sum([board[col+i][row] for i in range(self.winning_condition)]) == self.winning_condition*self.player:
                     #print("pionowo")
                     return True
         for col  in range(self.height - self.winning_condition + 1):
             for row in range(self.width - self.winning_condition +1):
-                if sum([self.board[col+i][row+i] for i in range(self.winning_condition)]) == self.winning_condition*self.player:
+                if sum([board[col+i][row+i] for i in range(self.winning_condition)]) == self.winning_condition*self.player:
                     #print("skosnie")
                     return True
         for col in range(self.height - self.winning_condition + 1):
             for row in range(self.width - self.winning_condition + 1):
-                if sum([self.board[col+i][row +self.winning_condition-i-1] for i in range(self.winning_condition)]) == self.winning_condition*self.player:
+                if sum([board[col+i][row +self.winning_condition-i-1] for i in range(self.winning_condition)]) == self.winning_condition*self.player:
                     #print("antyskosnie")
                     return True
         return False
@@ -114,6 +114,8 @@ class KiKEnv():
                     list.append(i*self.height+j)
         return list
 
+    # def execute_action_on_board(self, action):
+
 
     # funckja step: bierze na wejściu numer pola, a na wyjściu zwraca obserwację itp.
     def step(self, action):
@@ -126,7 +128,7 @@ class KiKEnv():
         done = False
         # now = datetime.now().time()
         # print(f'Checking win at time = {now.strftime("%H:%M:%S")}')
-        if self.check_win():
+        if self.check_win(self.board):
             done = True
             self.reward = self.player
         self.player = - self.player
@@ -155,30 +157,57 @@ class KiKEnv():
         pass
 
     # wypisanie aktualnego stanu gry
-    def q_render(self, network):
-        st = self.board.flatten()
-        st_input = np.array([st])
-        for y in range(self.board.shape[0]):
-            print('|', end='')
-            for x in range(self.board.shape[1]):
-                val = self.board[y][x]
-                if val == 1.:
-                    print(' o ', end='  ')
-                elif val == -1.:
-                    print(' x ', end='  ')
-                else:
-                    ac = np.zeros(9)
-                    ac[x+y*self.width] = 1
-                    ac_input = np.array([ac])
-                    print(round(tf.keras.backend.get_value(network.model([st_input, ac_input])[0][0]),2), end=' ')
-            print('|')
-        pass
+    # def q_render(self, network):
+    #     st = self.board.flatten()
+    #     st_input = np.array([st])
+    #     for y in range(self.board.shape[0]):
+    #         print('|', end='')
+    #         for x in range(self.board.shape[1]):
+    #             val = self.board[y][x]
+    #             if val == 1.:
+    #                 print(' o ', end='  ')
+    #             elif val == -1.:
+    #                 print(' x ', end='  ')
+    #             else:
+    #                 ac = np.zeros(9)
+    #                 ac[x+y*self.width] = 1
+    #                 ac_input = np.array([ac])
+    #                 print(round(tf.keras.backend.get_value(network.model([st_input, ac_input])[0][0]),2), end=' ')
+    #         print('|')
+    #     pass
 
     def check_if_in_range(self,a,b):
         if a <= self.width and a >=1 and b <= self.height and b >=1:
             return True
         else:
             return False
+
+    def heuristic(self):
+        ''' Heuristic play: make a winnig move if possible, block opponent winning move otherwise or do a random move'''
+        # sprawdzamy czy mamy ruch wygrywający
+        for action in self.legal_actions():
+            temporal_board = self.board
+            y_position = action // self.width  # bierzemy podłogę z dzielenia
+            x_position = action - y_position * self.width  # reszta z dzielenia
+            # aktualizujemy stan planszy
+            temporal_board[y_position, x_position] = self.player
+            if self.check_win(temporal_board):
+                return self.step(action)
+        # sprawdzamy, czy przeciwnik ma ruch wygrywający
+        for action in self.legal_actions():
+            temporal_board = self.board
+            y_position = action // self.width  # bierzemy podłogę z dzielenia
+            x_position = action - y_position * self.width  # reszta z dzielenia
+            # aktualizujemy stan planszy
+            temporal_board[y_position, x_position] = -self.player
+            if self.check_win():
+                return self.step(action)
+        # jak nie, to robimt ruch losowy
+        action = np.random.choice(self.legal_actions())
+        return self.step(action)
+
+
+
 
     # funckja umożliwiająca grę we dwóch graczy
     def human_vs_human_play(self):
@@ -254,13 +283,18 @@ class KiKEnv():
             if self.player == 1:
                 print('Aktualny stan planszy:')
                 print()
-                self.q_render(network)
+                self.render()
                 print()
                 print('Podaj współrzędne pola.')
 
                  # pętla pobierania ruchu oraz sprawdzania, czy ruch jest dozwolony
                 while True:
-                    a, b = input().split()
+                    while True:
+                        try:
+                            a, b = input().split()
+                            break
+                        except:
+                            print(f'Zły format danych. Podaj dwie liczby naturalne w przedziałach 'f'(1,{self.width}) oraz (1,{self.height}).')
                     # a = input()
                     # b = input()
                     if a.isnumeric() and b.isnumeric() and self.check_if_in_range(int(a), int(b)):
