@@ -1,9 +1,8 @@
-""" Klasy implementujące algorytmy wybierania akcji na podstawie obserwacji oraz modelu. """
 
 import numpy as np
 
 class Small_Agent:
-    """Base class for Agent for a 3x3 board (requires flattening of the input)"""
+    """Base class for Agent for a 3x3 board (requires flattening of the input). No randomness."""
     def __init__(self, network):
         self.network = network
 
@@ -11,30 +10,34 @@ class Small_Agent:
     def act(self, state, legal_actions, player):
         """ Choose best action. Returns action and corresponding Q-value """
         st = state.flatten()
-        st_imput = np.array([st])
+        st_input = np.array([st])
         return_q_value = - player
         target_action = 0
-        """ Search for the action with the highest Q value """
 
+
+        """ Loop searching for the action with the highest/lowest Q value."""
         for action in legal_actions:
             ac = np.zeros(9)
             ac[action] = 1
             ac_input = np.array([ac])
-            current_q_value = self.network.model([st_imput, ac_input])
-            """Depending ont he player we maximize or minimize the Q value of the action we choose"""
-            """ Compare it the new Q-value is higher to the previously chosen one """
+            current_q_value = self.network.model([st_input, ac_input])
+
+            """For the first player we are maximasiong the Q value."""
             if player == 1:
                 if current_q_value >= return_q_value:
                     return_q_value = current_q_value
                     target_action = action
+
+            """For the second player we are minimising the Q value."""
             if player == -1:
                 if current_q_value <= return_q_value:
                     return_q_value = current_q_value
                     target_action = action
+
         return target_action, return_q_value
 
 class Small_Agent_Explorator:
-    """Base class for Agent for a 3x3 board (requires flattening of the input)"""
+    """Base class for Agent for a 3x3 board with randomness."""
     def __init__(self, network, epsilon):
         self.network = network
         self.epsilon = epsilon
@@ -42,35 +45,42 @@ class Small_Agent_Explorator:
     def act(self, state, legal_actions, N, player):
         """ Choose best action. Returns action and corresponding Q-value """
         st = state.flatten()
-        st_imput = np.array([st])
+        st_input = np.array([st])
+
+        """ With probability epsilon choose random action. """
         if np.random.random_sample() < self.epsilon:
             action = np.random.choice(legal_actions)
             ac = np.zeros(9)
             ac[action] = 1
             ac_input = np.array([ac])
-            current_q_value = float(self.network.model([st_imput, ac_input])[0][0])
+            current_q_value = float(self.network.model([st_input, ac_input])[0][0])
             return action, current_q_value
         else:
             return_q_value = - player
             target_action = 0
+
             """ Search for the action with the highest Q value """
             for action in legal_actions:
                 ac = np.zeros(9)
                 ac[action] = 1
                 ac_input = np.array([ac])
-                current_q_value = float(self.network.model([st_imput, ac_input])[0][0])
+
+                """Compute Q value using the network."""
+                current_q_value = float(self.network.model([st_input, ac_input])[0][0])
+
                 """ Compare if the new Q-value is higher to the previously chosen one """
                 if player == 1:
                     if current_q_value >= return_q_value:
                         #print(f'current_q_value = {current_q_value}')
                         return_q_value = current_q_value
                         target_action = action
+
                 """ Compare if the new Q-value is lower to the previously chosen one """
                 if player == -1:
                     if current_q_value <= return_q_value:
                         return_q_value = current_q_value
                         target_action = action
-            # print(max_q_value)
+
             return target_action, return_q_value
 
 

@@ -82,7 +82,7 @@ runner_2.run(iterations, episodes, 100, 1, None)
 #     runner.run(iterations, episodes, 100, 1, None)
 
 # SAVING MODEL
-# Q_value = self.alpha*current[2] + (1-self.alpha)*next[2] + current[3]*self.gammanetwork.model.save("model_random_starting_player_3.h5")
+network.model.save("model_random_improved_Bellmans.h5")
 # network.model = load_model('model_random_starting_player.h5')
 
 
