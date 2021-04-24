@@ -82,7 +82,7 @@ runner_2.run(iterations, episodes, 100, 1, None)
 #     runner.run(iterations, episodes, 100, 1, None)
 
 # SAVING MODEL
-network.model.save("model_random_improved_Bellmans.h5")
+# network.model.save("model_random_improved_Bellmans.h5")
 # network.model = load_model('model_random_starting_player.h5')
 
 
@@ -91,8 +91,7 @@ network.model.save("model_random_improved_Bellmans.h5")
 env.reset()
 #env.human_vs_human_play()
 agent = Small_Agent(network)
-while True:
-   env.human_vs_ai_play(agent, network)
+env.game_play(agent, network)
 
 """ JAK UŻYĆ SIECI 3X3 """
 # st = np.zeros(9)

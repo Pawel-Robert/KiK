@@ -84,6 +84,8 @@ class Small_Agent_Explorator:
             return target_action, return_q_value
 
 
+
+
 # class Big_Agent():
 #     """Base class for Agent on any board"""
 #     def __init__(self, network, height, width):
