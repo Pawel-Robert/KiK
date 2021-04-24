@@ -11,7 +11,6 @@ def batch_metrics(trajectory_batch, iteration_num):
     length = 0
     avg_draws = 0
     for trajectory in trajectory_batch:
-        # print(trajectory[-1][3])
         first_wins += max(trajectory[-2][3],0)
         second_wins += min(trajectory[-2][3],0)
         length += len(trajectory)
