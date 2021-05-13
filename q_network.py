@@ -2,51 +2,23 @@ from keras.layers import Input, Dense, Conv2D, MaxPool2D, Flatten, Concatenate
 from keras.models import Model
 
 
-class QNetworkLarger:
-    def __init__(self, width, height):
-        input_state = Input(shape=(height, width, 1))
-        input_action = Input(shape=(height, width, 1))
-        state =  Conv2D(filters=26, kernel_size=(3, 3), activation='relu', padding='same')(input_state)
-        state = MaxPool2D(pool_size=(2, 2))(state)
-        state = Conv2D(filters=36, kernel_size=(3, 3), activation='relu', padding='same')(state)
-        state = MaxPool2D(pool_size=(2, 2),)(state)
-
-        action = Conv2D(filters=26, kernel_size=(3, 3), activation='relu', padding='same')(input_action)
-        action = MaxPool2D(pool_size=(2, 2))(action)
-        action = Conv2D(filters=36, kernel_size=(2, 2), activation='relu', padding='same')(action)
-        action = MaxPool2D(pool_size=(2, 2))(action)
-
-        state_and_action = Concatenate()([state, action])
-        state_and_action = Conv2D(filters=26, kernel_size=(3, 3), activation='relu', padding='same')(state_and_action)
-        state_and_action = MaxPool2D(pool_size=(2, 2))(state_and_action)
-
-        # spłaszczamy sieć
-        q_value = Flatten()(state_and_action)
-        # warstwa z maksymalną ilością połączeń
-        q_value = Dense(28, activation='relu')(q_value)
-        # ostatnia warstwa dająca prawdopodobieństwa wyboru poszczególnych pól na planszy
-
-        q_value = Dense(28)(q_value)
-
-        self.model = Model(inputs=[input_state, input_action], outputs=[q_value])
-        self.model.compile(loss='mse', metrics=['loss', 'accuracy'])
-
-
-
 class QNetwork3x3:
     def __init__(self):
-        input_state = Input(shape=(9,))
+        input_state_1 = Input(shape=(9,))
+        input_state_2 = Input(shape=(9,))
         input_action = Input(shape=(9,))
-        state =  Dense(50, activation='relu')(input_state)
-        action = Dense(50, activation='relu')(input_action)
-        state_and_action = Concatenate()([state, action])
+        state_1 =  Dense(50, activation='relu')(input_state_1)
+        state_2 =  Dense(50, activation='relu')(input_state_2)
+        action = Dense(5, activation='relu')(input_action)
+        state_and_action = Concatenate()([state_1, state_2, action])
 
         q_value = Dense(50, activation='relu')(state_and_action)
         # warstwa z maksymalną ilością połączeń
         q_value = Dense(50, activation='relu')(q_value)
+        # q_value = Dense(50, activation='relu')(q_value)
         # ostatnia warstwa dająca prawdopodobieństwa wyboru poszczególnych pól na planszy
         q_value = Dense(1)(q_value)
-        self.model = Model(inputs=[input_state, input_action], outputs=[q_value])
+        self.model = Model(inputs=[input_state_1, input_state_2, input_action], outputs=[q_value])
         self.model.compile(loss='mse', metrics=['mse'])#, optimizer=keras.optimizers.Adam(lr=0.03))
 
 

@@ -1,7 +1,9 @@
 from experience_buffer import ExperienceBuffer
+import neptune
 from metrics import batch_metrics
 from numpy import copy, random
 from datetime import datetime
+from agent import Heuristic_Agent
 from joblib import Parallel, delayed
 from joblib import wrap_non_picklable_objects
 from joblib.externals.loky import set_loky_pickler
@@ -15,7 +17,7 @@ from joblib.externals.loky import set_loky_pickler
 # set_loky_pickler("dill")
 
 class Runner:
-    def __init__(self, agent_class, network, epsilon, env, buffer_size, time_limit, heuristic):
+    def __init__(self, agent_class, network, epsilon, env, buffer_size, time_limit, heuristic, heigth, width):
         """The main class to run the training loop"""
         self.network = network
         self.agent = agent_class(network, epsilon)
@@ -23,63 +25,76 @@ class Runner:
         self.time_limit = time_limit
         self.N = 0
         self.illegal_actions = 0
-        self.buffer = ExperienceBuffer(buffer_size)
-        self.heuristic = heuristic
+        self.buffer = ExperienceBuffer(buffer_size, heigth, width)
+        self.heuristic = Heuristic_Agent()
+        self.network_wins = 0
+        self.heuristic_wins = 0
+        self.heigth = heigth
+        self.width = width
 
 
-    def run_one_episode(self):
+    def run_one_episode(self, iteration):
         """Plays one game AGAINST ITSELF and returns two trajectories."""
 
         """Trajectory of the first player."""
-        trajectory_1 = []
-
-        """Trajectory of the second player."""
-        trajectory_2 = []
+        trajectory = []
 
         """Time counter."""
         t = 0
 
         """Randomise initial player."""
-        self.env.player = 2*random.randint(2)-1
-
+        self.env.player = random.choice([-1,1])
+        # print(f'Zaczyna gracz {self.env.player}')
         observation = copy(self.env.reset())
 
         while True:
             """Agent choose action from list of legal actions, if this list is nonempty."""
+            """ It the list is empty we have a draw. """
+            """ The Agent always acts as it would be player 1. """
+            """ Hence for player=-1 make an ''illusion'' by changing the sign of the observation. """
+            state_1 = self.env.player_board(1)
+            state_2 = self.env.player_board(-1)
             if self.env.legal_actions():
-                action, q_value = self.agent.act(observation, self.env.legal_actions(), self.N, self.env.player)
+                action, q_value = self.agent.act(state_1, state_2, self.env.legal_actions(), iteration, 1)
             else:
+                """ In case of a draw. """
+                trajectory.append([copy(state_1), copy(state_2), 0, 0, 0, True])
                 break
 
-            """Interact with the environement."""
-            next_observation, reward, done, info = self.env.step(action)
-
             """ Punish the agent if it wants to make illegal move. In such case opponent wins. """
-            # else:
-            #    reward = -self.env.player
-            #    done = True
-            #    self.illegal_actions += 1
+            # if action not in self.env.legal_actions():
+            #    reward = -copy(self.env.player)
+            #    trajectory_1.append([observation, 0, 0, reward])
+            #    trajectory_2.append([observation, 0, 0, reward])
+            #    break
+
+            """Interact with the environment."""
+            next_observation, reward, done, info = self.env.step(action)
+            if reward == 1:
+                self.network_wins += 1
+            elif reward == -1:
+                self.heuristic_wins += 1
 
             """ Add data to the trajectory (depending on the player)."""
             if self.env.player == 1:
                 try:
-                    trajectory_1.append([copy(observation), copy(action), copy(q_value), copy(reward), copy(-self.env.player)])
+                    trajectory.append([copy(state_1), copy(state_2), action, q_value, 0, False])
                 except:
                     print("Error is appending trajectory.")
-                if done:
-                    """ Add additional piece of trajectory, which is necessary for the Bellmans equation. """
-                    trajectory_1.append([copy(next_observation), 0, 0, 0, 0])
-                    break
-            else:
-                try:
-                    trajectory_2.append([copy(observation), copy(action), copy(q_value), copy(reward), copy(-self.env.player)])
-                except:
-                    print("Error is appending trajectory.")
-                if done:
-                    """ Add additional piece of trajectory, which is necessary for the Bellmans equation. """
-                    trajectory_2.append([copy(next_observation), 0, 0, 0, 0])
-                    break
+            # else:
+            #     try:
+            #         trajectory_2.append([copy(observation), action, q_value, 0])
+            #     except:
+            #         print("Error is appending trajectory.")
+            if done:
+                """ Add additional piece of trajectory, which is necessary for the Bellmans equation. """
+                """ Only here we store the information about the reward. """
+                # print(f'wygrał gracz {-self.env.player}, reward = {reward}')
+                trajectory.append([copy(self.env.player_board(1)), copy(self.env.player_board(2)), 0, 0, reward, True])
+                # trajectory_2.append([copy(next_observation), 0, 0, reward])
+                break
 
+            """ Update the observation. """
             observation = next_observation
 
             """Check time limit."""
@@ -87,11 +102,11 @@ class Runner:
             if t == self.time_limit:
                 break
 
-        return trajectory_1, trajectory_2
+        return trajectory
 
 
 
-    def run_batch_of_episodes(self, n_episodes):
+    def run_batch_of_episodes(self, n_episodes, iteration):
         """Runs a batch of episeodes and returns list of trajectories."""
         """This could be parallelized to run on many cpus"""
         trajectory_batch = []
@@ -99,16 +114,35 @@ class Runner:
         # trajectory_batch = Parallel(n_jobs=6, prefer="threads")(delayed(Runner.run_one_episode)(self) for _ in range(n_episodes))
 
         for i in range(n_episodes):
-            temp_list = self.run_one_episode()
-            trajectory_batch.append(temp_list[0])
-            trajectory_batch.append(temp_list[1])
+            trajectory_batch.append(self.run_one_episode(iteration))
 
         return trajectory_batch
 
-    def run(self, n_iterations, episodes_in_batch, data_size, epochs, callback):
-        """Full RL training loop."""
+
+    def pre_training(self, n_iterations, episodes_in_batch, data_size, epochs, callback):
+        """ Initial training with more episodes in an iteration."""
         for num in range(n_iterations):
-            self.buffer.clear_buffer()
+            """ Print current time."""
+            now = datetime.now().time()
+            print(now.strftime("%H:%M:%S"))
+            print('Pretraining.')
+            """ Run batch of episodes. """
+            trajectory_batch = self.run_batch_of_episodes(episodes_in_batch, num)
+            """ Add data to the memory buffer and prepare data for training. """
+            for trajectory in trajectory_batch:
+                self.buffer.add_trajectory(trajectory)
+            x, y = self.buffer.prepare_training_data(data_size)
+            """ Fit the network to the data. """
+            self.network.model.fit(x, y)
+
+        print(f'Training finished.')
+
+    def run(self, n_iterations, episodes_in_batch, data_size, epochs):
+        """Full RL training loop."""
+        network_wins_list = []
+        heuristic_wins_list = []
+        draws_list = []
+        for num in range(n_iterations):
 
             """ Print current time."""
             now = datetime.now().time()
@@ -116,7 +150,8 @@ class Runner:
             print(f'Processing step = {num+1}')
 
             """ Run batch of episodes. """
-            trajectory_batch = self.run_batch_of_episodes(episodes_in_batch)
+            trajectory_batch = self.run_batch_of_episodes(episodes_in_batch, num)
+
 
             """ Print various metrics. """
             # print(f'First win rate = {batch_metrics(trajectory_batch, num)[0]}')
@@ -125,6 +160,7 @@ class Runner:
             # print(f'Average game length = {batch_metrics(trajectory_batch, num)[3]}')
 
             """ Add data to the memory buffer and prepare data for training. """
+            self.buffer.lengths_of_trajectories = 0
             for trajectory in trajectory_batch:
                 self.buffer.add_trajectory(trajectory)
             x, y = self.buffer.prepare_training_data(data_size)
@@ -135,61 +171,55 @@ class Runner:
             """ In case of Neptune. """
             # self.network.model.fit(x, y, epochs, callbacks=[callback])
 
+
+            """ Clearing the buffer from the old trajectories.self.buffer.clear_buffer() """
+            self.buffer.clear_buffer()
+
+            """ Test against heuristics. """
+            self.network_wins = 0
+            self.heuristic_wins = 0
+            for _ in range(100):
+                self.run_one_episode_against_heuristic(10000)
+            print('TESTING PERCENTAGES:')
+            print(f'Network wins = {self.network_wins}')
+            print(f'Heuristic wins = {self.heuristic_wins}')
+            draws = 100 - self.network_wins - self.heuristic_wins
+            print(f'Draws = {draws}')
+            network_wins_list.append(self.network_wins)
+            heuristic_wins_list.append(self.heuristic_wins)
+            draws_list.append(draws)
+            # neptune.log_metric('network_wins', network_wins)
+
         print(f'Training finished.')
 
 
-    def run_one_episode_against_heuristic(self):
+    def run_one_episode_against_heuristic(self, iteration):
         """Plays one game against HEURISTIC PLAYER and returns trajectory"""
-        trajectory = []
-        t = 0
-        #self.N += 1
-        self.env.player = 2*random.randint(2)-1
-        heuristic_player = 2*random.randint(2)-1
-        #print(f'zaczyna gracz {self.env.player}')
+
+        """Randomise initial player."""
+        self.env.player = random.choice([-1, 1])
         observation = copy(self.env.reset())
-        #print(observation)
+
         while True:
-            if self.env.player == heuristic_player:
-                next_observation, reward, done, info = self.env.heuristic()
-            else:
-
-                # self.env.render()
-                # agent wybiera akcję na polu jeszcze nie zajętym
-                if self.env.legal_actions():
-                    action, q_value = self.agent.act(observation, self.env.legal_actions(), self.N, self.env.player)
+           if self.env.legal_actions():
+                if self.env.player == 1:
+                    action, q_value = self.agent.act(self.env.player_board(1), self.env.player_board(-1), self.env.legal_actions(), iteration, 1)
                 else:
-                    # print(f'draw, reward = {reward}')
-                    break
-                if action in self.env.legal_actions():
-                    next_observation, reward, done, info = self.env.step(action)
-                # kara dla agenta, który chciałby wykonać nielegalny ruch
-                # wygrywa wówczas gracz przeciwny
-                else:
-                    reward = -self.env.player
-                    done = True
-                    self.illegal_actions += 1
-                # rint(observation)
-                # wybraną akcją wpływamy na środowiski i zbieramy obserwacje
+                    action, q_value = self.heuristic.act(observation, self.env.legal_actions(), -1)
+           else:
+               break
 
-                # print(observation, next_observation)
-                # obserwacje dodajemy do trajektorii
-                # q_value = q_value/1.01
-            try:
-                trajectory.append([copy(observation), copy(action), copy(q_value), copy(reward)])
-            except:
-                print("Error in appending trajectory.")
-            if done:
-                #print(f'done, reward={reward}, player = {self.env.player}')
-                # musimy do trajektorii dodać jeszcze stan ostatni planszy
-                trajectory.append([copy(next_observation), 0, 0, 0, 0])
+           next_observation, reward, done, info = self.env.step(action)
+
+           if reward == 1:
+                self.network_wins += 1
+           elif reward == -1:
+                self.heuristic_wins += 1
+
+           if done:
                 break
 
-            # update our observatons
-            observation = next_observation
-            # # sprawdzmy, czy nie przekroczyliśmy limitu czasu
-            t += 1
-            if t == self.time_limit:
-                break
-        # self.env.render()
-        # print(done)
-        return trajectory
+           observation = next_observation
+
+        return reward
+
