@@ -57,7 +57,7 @@ class KiKEnv():
         for i in range(self.height):
             for j in range(self.width):
                 if self.board[i,j] == 0:
-                    list.append(i*self.height+j)
+                    list.append(i*self.width+j)
         return list
 
     # def compute_coordinates(self, action):
@@ -65,12 +65,28 @@ class KiKEnv():
     #
     #     return y_position, x_position
 
+    def player_board(self, player):
+        board = np.zeros((self.height, self.width))
+        for i in range(self.height):
+            for j in range(self.width):
+                if self.board[i,j] == player:
+                    board[i,j] = 1
+        return board
+
+    def inverse_board(self):
+        self.board = - self.board
+
+
     def step(self, action):
         """" Main step function. Executes action and returns board, reward, done and info."""
+        # print(f'action={action}')
         y_position = action // self.width
         x_position = action - y_position * self.width
         """ Change board at position action. """
-        self.board[y_position, x_position] = self.player
+        if self.board[y_position, x_position] == 0:
+            self.board[y_position, x_position] = self.player
+        else:
+            print("BŁĄD!")
 
         self.reward = 0
         done = False
@@ -78,7 +94,7 @@ class KiKEnv():
         """ Check winning condition. """
         if self.check_win(self.board):
             done = True
-            self.reward = self.player
+            self.reward = copy(self.player)
 
         """ Swap the player. """
         self.player = - self.player
@@ -94,10 +110,10 @@ class KiKEnv():
 
     def render(self):
         """ Print the board. """
-        for x in range(self.board.shape[0]):
+        for y in range(self.board.shape[0]):
             print('|', end='')
-            for y in range(self.board.shape[1]):
-                val = self.board[x][y]
+            for x in range(self.board.shape[1]):
+                val = self.board[y][x]
                 if val == 1.:
                     print(' o ', end='')
                 elif val == -1.:
@@ -105,14 +121,36 @@ class KiKEnv():
                 else:
                     print(' . ', end='')
             print('|')
+        # print(f'legal actions = {self.legal_actions()}')
+        pass
+
+    def q_render(self, network):
+        """ Print the board. """
+        for y in range(self.board.shape[0]):
+            print('|', end='')
+            for x in range(self.board.shape[1]):
+                val = self.board[y][x]
+                if val == 1.:
+                    print(' o ', end='  ')
+                elif val == -1.:
+                    print(' x ', end='  ')
+                else:
+                    ac = np.zeros((self.height, self.width))
+                    ac[y, x] = 1
+                    ac_input = np.array([ac])
+                    # st_1 = self.player_board(1)
+                    # st_2 = self.player_board(-1)
+                    st_input = np.array([self.board])
+                    # st_input_2 = np.array([st_2])
+                    current_q_value = float(network.model([st_input, ac_input])[0][0])
+                    print(format(current_q_value,'.2f'), end=' ')
+            print('|')
+        # print(f'legal actions = {self.legal_actions()}')
         pass
 
 
     def check_if_in_range(self,a,b):
-        if a <= self.width and a >=1 and b <= self.height and b >=1:
-            return True
-        else:
-            return False
+        return a in range(1, self.width+1) and b in range(1, self.height+1)
 
 
     def print_game_menu(self):
@@ -120,9 +158,8 @@ class KiKEnv():
         print('\n\nWITAMY W GRZE!\n')
         print('   |/ . |/ ')
         print('   |\ | |\ \n')
-        print('Zasady gry: gracze na przemian stawiają swoje znaki na planszy. Wygrywa gracz,')
+        print('Zasady gry: gracze na przemian stawiają swoje znaki (kółko lub krzyżyk) na planszy. Wygrywa gracz,')
         print('który jako pierwszy postawi pięć znaków w rzędzie, kolumnie bądź skośnie.')
-        print('Znak gracza rozpoczynającego to liczba 1, drugi gracz dysponuje liczbą -1.')
         print(f'Plansza ma rozmiary {self.width} na {self.height}.\n')
         pass
 
@@ -146,31 +183,43 @@ class KiKEnv():
                     print(
                         f'Nie ma takiego pola. Podaj dwie liczby naturalne w przedziałach 'f'(1,{self.width}) oraz (1,{self.height}) ')
             action = (int(a) - 1) + (int(b) - 1) * self.width
-            print(type(action))
+            # print(type(action))
             return action
 
 
     def main_loop(self, mod, agent, network):
-        """ Main game play loop."""
+        """ Main gameplay loop."""
         while True:
             if not self.legal_actions():
                 break
             print('Aktualny stan planszy:\n')
-            self.render()
-            if mod == 'HvH':
+            self.q_render(network)
+            if mod == '1':
                 """ Take human action. """
                 action = self.human_input()
-            elif mod == 'HvAI':
-                if self.player == 1:
+            elif mod == '2':
+                if self.player == -1:
                     """ Take human action. """
                     action = self.human_input()
                 else:
                     """ Take AI action. """
-                    action, q_value = agent.act(self.board, self.legal_actions(), self.player)
-                    print(f'Komputer wykonał ruch o wartości {q_value}')
+                    action, q_value = agent.act(self.board, self.legal_actions(), 1)
+                    print_q_value = format(q_value, '.2f')
+                    print(f'Komputer wykonał ruch {action} o wartości {print_q_value}')
+            elif mod == '3':
+                board = self.player * self.board
+                action, q_value = agent.act(board, self.legal_actions(), 1)
+                print_q_value = format(q_value,'.2f')
+                if self.player == 1:
+                    print(f'Gracz komputerowy O wykonał ruch {action} o wartości {print_q_value}')
+                else:
+                    print(f'Gracz komputerowy X wykonał ruch {action} o wartości {print_q_value}')
+                if action not in self.legal_actions():
+                    for _ in range(1000):
+                        print('Ruch niedozwolony!')
             else:
-                action, q_value = agent.act(self.board, self.legal_actions(), self.player)
-                print(f'Komputer wykonał ruch o wartości {q_value}')
+                action = np.random.choice(self.legal_actions())
+                print(f'Komputer wykonał ruch {action}')
 
             """ Make a move. """
             state, reward, done, info = self.step(action)
@@ -178,24 +227,23 @@ class KiKEnv():
             """ Ckech if someone already won. """
             if done:
                 self.render()
-                print()
-                print(f'Wygrał gracz {-self.player}.')
-                time.sleep(2)
+                print(f'\n Wygrał gracz {-self.player}.')
+                # time.sleep(2)
                 break
 
     def game_play(self, agent, network):
         """" Game play! """
         self.print_game_menu()
         while True:
-            print("Wybierz mod gry: HvH, HvAI, AIvAI")
+            print("Wybierz mod gry: HvH (1), HvAI (2), AIvAI (3), gracz losowy vs gracz losowy (4)")
             mod = input()
             self.reset()
             """ Main game loop. """
             self.main_loop(mod, agent, network)
 
-            print("Czy chesz zagrać jeszcze raz? (T/N)")
-            if input() == 'N':
-                break
+            # print("Czy chesz zagrać jeszcze raz? (T/N)")
+            #if input() == 'N':
+            #    break
 
 
     def random_play(self, moves_limit = None):
@@ -222,27 +270,4 @@ class KiKEnv():
                 break
         return traj
 
-    def heuristic_agent(self):
-        ''' Heuristic play: make a winnig move if possible, block opponent winning move otherwise or do a random move'''
-        # sprawdzamy czy mamy ruch wygrywający
-        for action in self.legal_actions():
-            temporal_board = self.board
-            y_position = action // self.width  # bierzemy podłogę z dzielenia
-            x_position = action - y_position * self.width  # reszta z dzielenia
-            # aktualizujemy stan planszy
-            temporal_board[y_position, x_position] = self.player
-            if self.check_win(temporal_board):
-                return self.step(action)
-        # sprawdzamy, czy przeciwnik ma ruch wygrywający
-        for action in self.legal_actions():
-            temporal_board = self.board
-            y_position = action // self.width  # bierzemy podłogę z dzielenia
-            x_position = action - y_position * self.width  # reszta z dzielenia
-            # aktualizujemy stan planszy
-            temporal_board[y_position, x_position] = -self.player
-            if self.check_win():
-                return self.step(action)
-        # jak nie, to robimt ruch losowy
-        action = np.random.choice(self.legal_actions())
-        return self.step(action)
 
