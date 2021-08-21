@@ -1,12 +1,17 @@
 #from KiK.value_network import ValueNetwork
 from kik_env import KiKEnv
-from q_network import QNetwork3x3
+from q_network import QNetwork3x3, ValueNetwork3x3
 import numpy as np
 from runner import Runner
-from agent import Small_Agent_Explorator, Small_Agent, Heuristic_Agent, Random_Agent
+from agent import Small_Agent_Explorator, Small_Agent, Heuristic_Agent, Random_Agent, Small_MCTS_Agent
 from keras.models import load_model
 import time
 import keras
+from MCTS import MonteCarloTreeSearch
+import random
+
+random.randint(0,1)
+
 
 
 
@@ -22,8 +27,6 @@ env = KiKEnv(width, height, winning_condition)
 """ Defining the network. """
 
 network = QNetwork3x3()
-
-
 
 """ Inicialising Neptune. """
 #
@@ -62,7 +65,7 @@ runner.run(iterations, episodes, 100, 1)
 
 """ Saving and loading model trained."""
 
-network.model.save("model_maj_10.h5")
+network.model.save("model_maj_21.h5")
 #network.model = load_model('model_random_maj_4_1.h5')
 
 
@@ -71,4 +74,16 @@ network.model.save("model_maj_10.h5")
 
 agent = Small_Agent(network)
 env.game_play(agent, network)
+
+#  TO JEST TAKI TEST NA MCTS
+# value_network = ValueNetwork3x3()
+# env.reset()
+# mcts = MonteCarloTreeSearch(network, env)
+#
+# env.render()
+# for _ in range(4):
+#     action = mcts.predict_action(env.board)
+#     env.step(action)
+#     env.render()
+
 

@@ -1,5 +1,7 @@
 
 import numpy as np
+from MCTS import MonteCarloTreeSearch
+
 
 class Small_Agent:
     """Base class for Agent for a 3x3 board (requires flattening of the input). No randomness."""
@@ -14,6 +16,8 @@ class Small_Agent:
         st_2 = state_2.flatten()
         st_input_2 = np.array([st_2])
         ac = np.zeros(9)
+
+        """ Start with first possible action before running the loop. """
         target_action = legal_actions[0]
         ac[target_action] = 1
         ac_input = np.array([ac])
@@ -41,6 +45,24 @@ class Small_Agent:
                     target_action = action
 
         return target_action, return_q_value
+
+class Small_MCTS_Agent:
+    """Base class for Agent for a 3x3 board (requires flattening of the input). """
+    """ Uses Monte Carlo Tree Search algorithm. """
+    """" Sends back only action! """
+    def __init__(self, network, env):
+        self.network = network
+        self.env = env
+        """ MCTS algorithm. """
+        self.mcts = MonteCarloTreeSearch(network, env)
+
+
+    def act(self, state, player):
+        """ Choose best action. Returns action and corresponding Q-value """
+        action = self.mcts.predict_action(state, player)
+        return action
+
+
 
 class Random_Agent:
     """ Agent making totaly random moves. """
@@ -105,6 +127,7 @@ class Small_Agent_Explorator:
     """Base class for Agent for a 3x3 board with randomness."""
     def __init__(self, network, epsilon):
         self.network = network
+        """ Probability of choosing random action. """
         self.epsilon = epsilon
 
 
@@ -116,7 +139,7 @@ class Small_Agent_Explorator:
         st_input_2 = np.array([st_2])
 
         """ With probability epsilon choose random action. """
-        if np.random.random_sample() < self.epsilon:
+        if np.random.random() < self.epsilon:
             action = np.random.choice(legal_actions)
             ac = np.zeros(9)
             ac[action] = 1

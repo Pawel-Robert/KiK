@@ -217,11 +217,27 @@ class KiKEnv():
                 if action not in self.legal_actions():
                     for _ in range(1000):
                         print('Ruch niedozwolony!')
+            elif mod == '4':
+                """ MCTS Agent. """
+                if self.player == -1:
+                    """ Take human action. """
+                    action = self.human_input()
+                else:
+                    """ We need to take care of the board and player, as MCTS messes it up. """
+                    board = self.board
+                    player = self.player
+                    action = agent.act(self.board, self.player)
+                    self.board = board
+                    self.player = player
+                if action not in self.legal_actions():
+                    print('Ruch niedozwolony!')
             else:
                 action = np.random.choice(self.legal_actions())
                 print(f'Komputer wykonał ruch {action}')
 
             """ Make a move. """
+            print(action)
+            self.render()
             state, reward, done, info = self.step(action)
 
             """ Ckech if someone already won. """
@@ -234,8 +250,9 @@ class KiKEnv():
     def game_play(self, agent, network):
         """" Game play! """
         self.print_game_menu()
+
         while True:
-            print("Wybierz mod gry: HvH (1), HvAI (2), AIvAI (3), gracz losowy vs gracz losowy (4)")
+            print("Wybierz mod gry: HvH (1), HvAI (2), AIvAI (3), MCTS (4), gracz losowy vs gracz losowy (5)")
             mod = input()
             self.reset()
             """ Main game loop. """

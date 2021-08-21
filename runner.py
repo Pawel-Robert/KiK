@@ -4,9 +4,10 @@ from metrics import batch_metrics
 from numpy import copy, random
 from datetime import datetime
 from agent import Heuristic_Agent
+from tensorflow.keras.models import clone_model
 from joblib import Parallel, delayed
 from joblib import wrap_non_picklable_objects
-from joblib.externals.loky import set_loky_pickler
+# from joblib.externals.loky import set_loky_p
 # import dill as pickle
 # import ray
 
@@ -17,7 +18,7 @@ from joblib.externals.loky import set_loky_pickler
 # set_loky_pickler("dill")
 
 class Runner:
-    def __init__(self, agent_class, network, epsilon, env, buffer_size, time_limit, heuristic, heigth, width):
+    def __init__(self, agent_class, network, epsilon, env, buffer_size, time_limit, heuristic, heigth, width, target_network_update_frequency=20):
         """The main class to run the training loop"""
         self.network = network
         self.agent = agent_class(network, epsilon)
@@ -25,18 +26,23 @@ class Runner:
         self.time_limit = time_limit
         self.N = 0
         self.illegal_actions = 0
-        self.buffer = ExperienceBuffer(buffer_size, heigth, width)
+        """ Initialise experience buffer with a target network. """
+        self.buffer = ExperienceBuffer(buffer_size, heigth, width, clone_model(network.model))
         self.heuristic = Heuristic_Agent()
         self.network_wins = 0
         self.heuristic_wins = 0
         self.heigth = heigth
         self.width = width
+        self.target_network_update_frequency = target_network_update_frequency
 
 
     def run_one_episode(self, iteration):
         """Plays one game AGAINST ITSELF and returns two trajectories."""
 
         """Trajectory of the first player."""
+        """ Each entry in the trajectory consists of states of both players, chosen action, 
+         its Q-value, reward and the information, wheather the game has ended."""
+
         trajectory = []
 
         """Time counter."""
@@ -47,13 +53,17 @@ class Runner:
         # print(f'Zaczyna gracz {self.env.player}')
         observation = copy(self.env.reset())
 
+        """ Main game loop. """
         while True:
             """Agent choose action from list of legal actions, if this list is nonempty."""
-            """ It the list is empty we have a draw. """
             """ The Agent always acts as it would be player 1. """
-            """ Hence for player=-1 make an ''illusion'' by changing the sign of the observation. """
+            """ Hence in the case, when agent shoudl act as player = - 1 we make an ''illusion'' 
+            - we change the signs of the marks on the board, so that agent acts still as player 1. """
+
             state_1 = self.env.player_board(1)
             state_2 = self.env.player_board(-1)
+
+            """ It the list is empty we have a draw. """
             if self.env.legal_actions():
                 action, q_value = self.agent.act(state_1, state_2, self.env.legal_actions(), iteration, 1)
             else:
@@ -70,10 +80,10 @@ class Runner:
 
             """Interact with the environment."""
             next_observation, reward, done, info = self.env.step(action)
-            if reward == 1:
-                self.network_wins += 1
-            elif reward == -1:
-                self.heuristic_wins += 1
+            # if reward == 1:
+            #     self.network_wins += 1
+            # elif reward == -1:
+            #     self.heuristic_wins += 1
 
             """ Add data to the trajectory (depending on the player)."""
             if self.env.player == 1:
@@ -139,6 +149,7 @@ class Runner:
 
     def run(self, n_iterations, episodes_in_batch, data_size, epochs):
         """Full RL training loop."""
+        """ statistical data for benchmarks """
         network_wins_list = []
         heuristic_wins_list = []
         draws_list = []
@@ -165,8 +176,17 @@ class Runner:
                 self.buffer.add_trajectory(trajectory)
             x, y = self.buffer.prepare_training_data(data_size)
 
+
             """ Fit the network to the data. """
             self.network.model.fit(x, y)
+
+            """ Once for a while update the target network. """
+            if num % self.target_network_update_frequency == 0:
+                self.buffer.target_network_model = clone_model(self.network.model)
+            #
+            # """ Update target network in experience buffer once a while"""
+            # if
+            # self.buffer.target_network = self.network
 
             """ In case of Neptune. """
             # self.network.model.fit(x, y, epochs, callbacks=[callback])
