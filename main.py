@@ -63,19 +63,23 @@ print('Podaj ilość danych treningowych w każdym treningu.')
 # runner.run(iterations, episodes, 100, 1, neptune_cbk)
 # runner.run(iterations, episodes, None, 1)
 
-runner.run(1, 1, None, 1)
+runner.run(100, 500, None, 1)
 
 """ Saving and loading model trained."""
+
 
 network.model.save("model_august_01.h5")
 #network.model = load_model('model_random_maj_4_1.h5')
 
+print('Zapisano model')
 
 """ Testing the network through gameplay. """
 
+human_test = False
 
-agent = Small_Agent(network)
-env.game_play(agent, network)
+if human_test:
+    agent = Small_Agent(network)
+    env.game_play(agent, network)
 
 #  TO JEST TAKI TEST NA MCTS
 # value_network = ValueNetwork3x3()

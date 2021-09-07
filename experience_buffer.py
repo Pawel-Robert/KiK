@@ -22,12 +22,10 @@ class ExperienceBuffer:
     def add_trajectory(self, trajectory):
         """Adds trajectory to buffer"""
 
-
         """ Rise the length of trajectories. """
         self.lengths_of_trajectories += len(trajectory)-1
 
         """trajectory = [state, action, q_value, reward, done]"""
-
         "Initial values of data from the trajectory to be consumed by the network."
         current = trajectory[0]
         state = current[0]
@@ -81,7 +79,6 @@ class ExperienceBuffer:
         self.data = self.data[data_to_clear: ]
         # print(f'len self data = {len(self.data)}')
         self.lengths_of_trajectories -= data_to_clear
-        pass
 
     # def add_MCTS_trajectory(self, trajectory):
     #     """ Use MCTS algorithm to compute target Q value for the learining process. """

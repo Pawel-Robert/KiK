@@ -90,7 +90,6 @@ class Runner:
             if t == self.time_limit:
                 break
 
-        print(f'Playing game took = {time.time() - time_s}')
         return trajectory
 
 
@@ -156,12 +155,11 @@ class Runner:
 
             """ Fit the network to the data. """
             self.network.model.fit(x, y)
-
+            print('Fitting finished')
             """ Clearing the buffer from the old trajectories.self.buffer.clear_buffer() """
             # TODO: to jest coś dziwnego
             # data_to_clear = episodes_in_batch * 3
             self.buffer.clear_buffer(0)
-
             """ Run test against heuristics. """
             network_wins_list, heuristic_wins_list, draws_list = self.test_against_heuristic(network_wins_list, heuristic_wins_list, draws_list)
 

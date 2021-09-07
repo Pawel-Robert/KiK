@@ -16,8 +16,7 @@ class QValue:
         self.model.compile(loss='mse', metrics=['mse'])
 
     def evaluate(self, state, action):
-        x = self.model.predict([np.array([state.flatten()]), np.array([action])])[0][0]
-        return self.model.predict([np.array([state.flatten()]), np.array([action])])[0][0]
+        return self.model([np.array([state.flatten()]), np.array([action])])[0][0]
 
 # class QNetwork3x3:
 #     def __init__(self):
