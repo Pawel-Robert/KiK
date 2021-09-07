@@ -8,29 +8,21 @@ class Small_Agent:
     def __init__(self, network):
         self.network = network
 
-
-    def act(self, state_1, state_2, legal_actions, player):
+    def act(self, state, legal_actions, player):
         """ Choose best action. Returns action and corresponding Q-value """
-        st_1 = state_1.flatten()
-        st_input_1 = np.array([st_1])
-        st_2 = state_2.flatten()
-        st_input_2 = np.array([st_2])
-        ac = np.zeros(9)
-
+        action = np.zeros(9)
         """ Start with first possible action before running the loop. """
         target_action = legal_actions[0]
-        ac[target_action] = 1
-        ac_input = np.array([ac])
-        return_q_value = float(self.network.model([st_input_1, st_input_2, ac_input])[0][0])
+        action[target_action] = 1
+        return_q_value = self.network.evaluate(state, action)
         # print(return_q_value)
 
         """ Loop searching for the action with the highest/lowest Q value."""
         for action in legal_actions:
             """ Using the network compute Q value of the action. """
-            ac = np.zeros(9)
-            ac[action] = 1
-            ac_input = np.array([ac])
-            current_q_value = float(self.network.model([st_input_1, st_input_2, ac_input])[0][0])
+            action_input = np.zeros(9)
+            action_input[action] = 1
+            current_q_value = self.network.evaluate(state, action_input)
 
             """For the first player we are maximizing the Q value."""
             if player == 1:
@@ -39,12 +31,76 @@ class Small_Agent:
                     target_action = action
 
             """For the second player we are minimising the Q value."""
+            # This is redundant, as the network acts always as the first player.
             if player == -1:
                 if current_q_value <= return_q_value:
                     return_q_value = current_q_value
                     target_action = action
 
         return target_action, return_q_value
+
+class Small_Agent_Explorator(Small_Agent):
+    """Base class for Agent for a 3x3 board with randomness."""
+    def __init__(self, network, epsilon):
+        super().__init__(network)
+        """ Probability of choosing random action. """
+        self.epsilon = epsilon
+
+
+    def act(self, state, legal_actions, player, iteration=1):
+        if np.random.random() < self.epsilon / np.sqrt(iteration):
+            action = np.random.choice(legal_actions)
+            action_input = np.zeros(9)
+            action_input[action] = 1
+            current_q_value = self.network.evaluate(state, action_input)
+            return action, current_q_value
+        else:
+            return super().act(state, legal_actions, player)
+
+    # def act_old(self, state_1, state_2, legal_actions, player, iteration=1):
+    #     """ Choose best action. Returns action and corresponding Q-value """
+    #     st_input_1 = self.prepare_state(state_1)
+    #     st_input_2 = self.prepare_state(state_2)
+    #
+    #     """ With probability epsilon/sqrt(iteration) choose random action. """
+    #     if np.random.random() < self.epsilon/np.sqrt(iteration):
+    #         action = np.random.choice(legal_actions)
+    #         ac = np.zeros(9)
+    #         ac[action] = 1
+    #         ac_input = np.array([ac])
+    #         current_q_value = float(self.network.model([st_input_1, st_input_2, ac_input])[0][0])
+    #         return action, current_q_value
+    #     else:
+    #         target_action = legal_actions[0]
+    #         ac = np.zeros(9)
+    #         ac[target_action] = 1
+    #         ac_input = np.array([ac])
+    #         return_q_value = float(self.network.model([st_input_1, st_input_2, ac_input])[0][0])
+    #
+    #         """ Search for the action with the highest Q value """
+    #         for action in legal_actions:
+    #             ac = np.zeros(9)
+    #             ac[action] = 1
+    #             ac_input = np.array([ac])
+    #
+    #             """Compute Q value using the network."""
+    #             current_q_value = float(self.network.model([st_input_1, st_input_2, ac_input])[0][0])
+    #
+    #             """ Compare if the new Q-value is higher to the previously chosen one """
+    #             if player == 1:
+    #                 if current_q_value >= return_q_value:
+    #                     #print(f'current_q_value = {current_q_value}')
+    #                     return_q_value = current_q_value
+    #                     target_action = action
+    #
+    #             """ Compare if the new Q-value is lower to the previously chosen one """
+    #             if player == -1:
+    #                 if current_q_value <= return_q_value:
+    #                     return_q_value = current_q_value
+    #                     target_action = action
+    #
+    #         return target_action, return_q_value
+
 
 class Small_MCTS_Agent:
     """Base class for Agent for a 3x3 board (requires flattening of the input). """
@@ -68,8 +124,10 @@ class Random_Agent:
     """ Agent making totaly random moves. """
     def __init__(self):
         pass
-    def act(self, legal_actions):
-        return np.random.choice(legal_actions)
+    def act(self, observation, legal_actions, player):
+        del observation
+        del player
+        return np.random.choice(legal_actions), 0
 
 class Heuristic_Agent:
     ''' Heuristic play: make a winnig move if possible, block opponent winning move otherwise or do a random move'''
@@ -120,59 +178,3 @@ class Heuristic_Agent:
                 return action, 0
         """ Make a random move. """
         return np.random.choice(legal_actions), 0
-
-
-
-class Small_Agent_Explorator:
-    """Base class for Agent for a 3x3 board with randomness."""
-    def __init__(self, network, epsilon):
-        self.network = network
-        """ Probability of choosing random action. """
-        self.epsilon = epsilon
-
-
-    def act(self, state_1, state_2, legal_actions, iteration, player):
-        """ Choose best action. Returns action and corresponding Q-value """
-        st_1 = state_1.flatten()
-        st_input_1 = np.array([st_1])
-        st_2 = state_2.flatten()
-        st_input_2 = np.array([st_2])
-
-        """ With probability epsilon choose random action. """
-        if np.random.random() < self.epsilon:
-            action = np.random.choice(legal_actions)
-            ac = np.zeros(9)
-            ac[action] = 1
-            ac_input = np.array([ac])
-            current_q_value = float(self.network.model([st_input_1, st_input_2, ac_input])[0][0])
-            return action, current_q_value
-        else:
-            target_action = legal_actions[0]
-            ac = np.zeros(9)
-            ac[target_action] = 1
-            ac_input = np.array([ac])
-            return_q_value = float(self.network.model([st_input_1, st_input_2, ac_input])[0][0])
-
-            """ Search for the action with the highest Q value """
-            for action in legal_actions:
-                ac = np.zeros(9)
-                ac[action] = 1
-                ac_input = np.array([ac])
-
-                """Compute Q value using the network."""
-                current_q_value = float(self.network.model([st_input_1, st_input_2, ac_input])[0][0])
-
-                """ Compare if the new Q-value is higher to the previously chosen one """
-                if player == 1:
-                    if current_q_value >= return_q_value:
-                        #print(f'current_q_value = {current_q_value}')
-                        return_q_value = current_q_value
-                        target_action = action
-
-                """ Compare if the new Q-value is lower to the previously chosen one """
-                if player == -1:
-                    if current_q_value <= return_q_value:
-                        return_q_value = current_q_value
-                        target_action = action
-
-            return target_action, return_q_value

@@ -1,6 +1,6 @@
 #from KiK.value_network import ValueNetwork
 from kik_env import KiKEnv
-from q_network import QNetwork3x3, ValueNetwork3x3
+from q_network import QValue, ValueNetwork3x3
 import numpy as np
 from runner import Runner
 from agent import Small_Agent_Explorator, Small_Agent, Heuristic_Agent, Random_Agent, Small_MCTS_Agent
@@ -26,7 +26,7 @@ env = KiKEnv(width, height, winning_condition)
 
 """ Defining the network. """
 
-network = QNetwork3x3()
+network = QValue()
 
 """ Inicialising Neptune. """
 #
@@ -54,18 +54,20 @@ network = QNetwork3x3()
 
 runner = Runner(Small_Agent_Explorator, network, 0.1, env, 100, 10, True, height, width)
 print('Podaj ilość iteracji w trakcie treningu.')
-iterations = input()
-iterations = int(iterations)
+# iterations = int(input())
 print('Podaj ilość rozgrywek w każdej iteracji.')
-episodes = input()
-episodes = int(episodes)
+# episodes = int(input())
+print('Podaj ilość danych treningowych w każdym treningu.')
+# data_size = int(input())
 # runner.pre_training(1, 300, 100, 1, neptune_cbk)
 # runner.run(iterations, episodes, 100, 1, neptune_cbk)
-runner.run(iterations, episodes, 100, 1)
+# runner.run(iterations, episodes, None, 1)
+
+runner.run(1, 1, None, 1)
 
 """ Saving and loading model trained."""
 
-network.model.save("model_maj_21.h5")
+network.model.save("model_august_01.h5")
 #network.model = load_model('model_random_maj_4_1.h5')
 
 

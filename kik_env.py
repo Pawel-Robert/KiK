@@ -87,7 +87,7 @@ class KiKEnv():
         if self.board[y_position, x_position] == 0:
             self.board[y_position, x_position] = self.player
         else:
-            print("BŁĄD!")
+            raise ValueError('Nielegalny ruch')
 
         self.reward = 0
         done = False
