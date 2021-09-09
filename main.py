@@ -1,34 +1,30 @@
-#from KiK.value_network import ValueNetwork
-from kik_env import KiKEnv
-from q_network import QValue, ValueNetwork3x3
-import numpy as np
+""" Main file. """
+from q_network import QValue
 from runner import Runner
-from agent import Small_Agent_Explorator, Small_Agent, Heuristic_Agent, Random_Agent, Small_MCTS_Agent
-from keras.models import load_model
-import time
-import keras
-from MCTS import MonteCarloTreeSearch
-import random
+from agent import Small_Agent_Explorator, Small_Agent
+from training_algorithms import BellmanAlgorithm
+from datetime import datetime
+from kik_env import KiKEnv
 
-random.randint(0,1)
+WIDTH = 3
+HEIGHT = 3
+WIN_CND = 3
 
-
-
-
-""" Defining environement. """""
-
-width = 3
-height = 3
-winning_condition = 3
-
-env = KiKEnv(width, height, winning_condition)
-
-
-""" Defining the network. """
-
+env = KiKEnv(WIDTH, HEIGHT, WIN_CND)
 network = QValue()
+runner = Runner(Small_Agent_Explorator, BellmanAlgorithm, network, env, 0.1, 100)
+runner.run(100, 500, None, 1)
+now = datetime.now().time()
+network.model.save(f'./models/model_{now.strftime("%H:%M:%S")}.h5')
 
-""" Inicialising Neptune. """
+HUMAN_TEST = False
+if HUMAN_TEST:
+    agent = Small_Agent(network)
+    env.game_play(agent, network)
+
+
+
+# """ Inicialising Neptune. """
 #
 # import neptune.new as neptune
 # from neptune.new.integrations.tensorflow_keras import NeptuneCallback
@@ -50,36 +46,14 @@ network = QValue()
 
 
 
-""" Training the network. """
-
-runner = Runner(Small_Agent_Explorator, network, 0.1, env, 100, 10, True, height, width)
-print('Podaj ilość iteracji w trakcie treningu.')
-# iterations = int(input())
-print('Podaj ilość rozgrywek w każdej iteracji.')
-# episodes = int(input())
-print('Podaj ilość danych treningowych w każdym treningu.')
+# print('Podaj ilość iteracji w trakcie treningu.')
+# # iterations = int(input())
+# print('Podaj ilość rozgrywek w każdej iteracji.')
+# # episodes = int(input())
+# print('Podaj ilość danych treningowych w każdym treningu.')
 # data_size = int(input())
-# runner.pre_training(1, 300, 100, 1, neptune_cbk)
-# runner.run(iterations, episodes, 100, 1, neptune_cbk)
-# runner.run(iterations, episodes, None, 1)
-
-runner.run(100, 500, None, 1)
-
-""" Saving and loading model trained."""
 
 
-network.model.save("model_august_01.h5")
-#network.model = load_model('model_random_maj_4_1.h5')
-
-print('Zapisano model')
-
-""" Testing the network through gameplay. """
-
-human_test = False
-
-if human_test:
-    agent = Small_Agent(network)
-    env.game_play(agent, network)
 
 #  TO JEST TAKI TEST NA MCTS
 # value_network = ValueNetwork3x3()

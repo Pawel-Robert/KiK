@@ -204,11 +204,11 @@ class KiKEnv():
                     action = self.human_input()
                 else:
                     """ Take AI action. """
-                    action, q_value = agent.act(self.player_board(1), self.player_board(2), self.legal_actions(), 1)
+                    action, q_value = agent.act(self.player_board(1), self.player_board(2), )
                     print_q_value = format(q_value, '.2f')
                     print(f'Komputer wykonał ruch {action} o wartości {print_q_value}')
             elif mod == '3':
-                action, q_value = agent.act(self.player_board(1), self.player_board(2), self.legal_actions(), 1)
+                action, q_value = agent.act(self.player_board(1), self.player_board(2), )
                 print_q_value = format(q_value,'.2f')
                 if self.player == 1:
                     print(f'Gracz komputerowy O wykonał ruch {action} o wartości {print_q_value}')
@@ -226,7 +226,7 @@ class KiKEnv():
                     """ We need to take care of the board and player, as MCTS messes it up. """
                     board = self.board
                     player = self.player
-                    action = agent.act(self.board, self.player)
+                    action = agent.act(self.board, self.player, )
                     self.board = board
                     self.player = player
                 if action not in self.legal_actions():
