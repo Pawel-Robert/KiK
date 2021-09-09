@@ -31,28 +31,6 @@ class Small_Agent_Explorator(Small_Agent):
         return super().act(state, legal_actions, player)
 
 
-# class Small_MCTS_Agent(Small_Agent):
-#     """ Uses Monte Carlo Tree Search algorithm. """
-#     def __init__(self, network):
-#         super().__init__(network)
-#         self.env = env
-#         self.mcts = MonteCarloTreeSearch(network, env)
-#
-#     def act(self, state, legal_actions, player):
-#         """ Choose best action. Returns action and corresponding Q-value """
-#         action = self.mcts.predict_action(state, player)
-#         return action
-
-# class Random_Agent:
-#     """ Agent making totaly random moves. """
-#     def __init__(self):
-#         pass
-#     def act(self, observation, legal_actions, player):
-#         """ Random move. """
-#         del observation
-#         del player
-#         return np.random.choice(legal_actions), 0
-
 class Heuristic_Agent:
     """ Make a winnig move if possible, block opponent win move otherwise or do a random move. """
     def __init__(self):
@@ -102,3 +80,26 @@ class Heuristic_Agent:
             if self.check_win(temporal_board, - player):
                 return action, 0
         return np.random.choice(legal_actions), 0
+
+
+# class Small_MCTS_Agent(Small_Agent):
+#     """ Uses Monte Carlo Tree Search algorithm. """
+#     def __init__(self, network):
+#         super().__init__(network)
+#         self.env = env
+#         self.mcts = MonteCarloTreeSearch(network, env)
+#
+#     def act(self, state, legal_actions, player):
+#         """ Choose best action. Returns action and corresponding Q-value """
+#         action = self.mcts.predict_action(state, player)
+#         return action
+
+# class Random_Agent:
+#     """ Agent making totaly random moves. """
+#     def __init__(self):
+#         pass
+#     def act(self, observation, legal_actions, player):
+#         """ Random move. """
+#         del observation
+#         del player
+#         return np.random.choice(legal_actions), 0

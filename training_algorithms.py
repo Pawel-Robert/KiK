@@ -1,6 +1,5 @@
 """ Class with various trainig algorithms """
 
-
 class Algorithms:
     """ Class algorithm. """
     def __init__(self):
