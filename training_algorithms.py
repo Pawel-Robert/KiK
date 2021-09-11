@@ -1,21 +1,23 @@
-""" Class with various trainig algorithms """
+""" Class with various training algorithms """
 
-class Algorithms:
+class Algorithm:
     """ Class algorithm. """
     def __init__(self):
         pass
 
-    def q_value(self, current, nxt, reward, alpha,):
+    def q_value(self, current, nxt, reward, alpha, gamma, done):
         """ Do nothing. """
         return current
 
-class BellmanAlgorithm:
+class BellmanAlgorithm(Algorithm):
     def __init__(self):
         super().__init__()
 
-    def q_value(self, current, nxt, reward, alpha, gamma, done):
-        """ Computes target q value using Belmans equation. """
+    def q_value(self, current_q, nxt_q, reward, done, alpha, gamma):
+        """ Computes target q value using Bellman equation. """
+        # return 1
         if done:
-            return gamma * reward
+            return reward
         else:
-            return alpha * current + (1 - alpha) * nxt
+   #        return nxt_q
+            return gamma * (alpha * current_q + (1 - alpha) * nxt_q)
