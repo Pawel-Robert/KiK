@@ -20,19 +20,23 @@ class Runner:
     def run_one_episode(self, iteration):
         """Plays one game AGAINST ITSELF and returns a trajectory of one player.
          The Agent always acts as it would be player 1 (using illusion mechanism).
-         In case of a draw, the loops ans and we store the reward. """
+         In case of a draw, the loops ans and we store the reward.
+         Remark: function step changes the player. We store the trajectory of player 1 only. """
+        del iteration
+        ai_player = 1
+        swap_const = -1
         trajectory = []
         self.env.player = random.choice([-1,1]) # randomize initial player
         self.env.reset()
-        state = copy(self.env.board)
         while True:
             if self.env.legal_actions():
-                action, q_value = self.agent.act(state, self.env.legal_actions(), self.env.player)
+                state = copy(self.env.board)
+                action, q_value = self.agent.act(state * self.env.player, self.env.legal_actions(), self.env.player)
                 next_observation, reward, done, _ = self.env.step(action)
-                if self.env.player == 1:
+                if self.env.player * swap_const == ai_player:
                     trajectory.append([state, action, q_value, 0, False])
                 if done:
-                    trajectory.append([state, 0, 0, reward, True])
+                    trajectory.append([state, action, q_value, reward, True])
                     break
             else:
                 trajectory.append([state, 0, 0, 0, True])
@@ -44,6 +48,7 @@ class Runner:
         """Full RL training loop."""
         del data_size
         del epochs
+        target_network = self.network
         for num in range(n_iterations):
             now = datetime.now().time()
             print(now.strftime("%H:%M:%S"))
@@ -51,12 +56,14 @@ class Runner:
 
             for _ in tqdm(range(episodes_in_batch)):
                 trajectory = self.run_one_episode(num)
-                self.buffer.add_trajectory(trajectory, self.algorithm)
+                self.buffer.add_trajectory(trajectory, self.algorithm, target_network)
             print(f'Length of data in the buffer = {len(self.buffer.data)}')
 
             state_and_actions, q_values = self.buffer.prepare_training_data()
             self.network.model.fit(state_and_actions, q_values)
             print('Fitting finished')
+            if num % 10 == 0:
+                target_network = self.network
 
             self.buffer.clear_buffer()
             self.tester.test_against_random(self.network)

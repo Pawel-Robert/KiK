@@ -5,6 +5,7 @@ from agent import Small_Agent_Explorator, Small_Agent
 from training_algorithms import BellmanAlgorithm
 from datetime import datetime
 from kik_env import KiKEnv
+from tensorflow.keras.models import load_model
 
 WIDTH = 3
 HEIGHT = 3
@@ -13,11 +14,11 @@ WIN_CND = 3
 env = KiKEnv(WIDTH, HEIGHT, WIN_CND)
 network = QValue()
 runner = Runner(Small_Agent_Explorator, BellmanAlgorithm, network, env, 0.1, 100)
-runner.run(100, 500, None, 1)
+# runner.run(100, 500, None, 1)
 now = datetime.now().time()
-network.model.save(f'./models/model_{now.strftime("%H:%M:%S")}.h5')
-
-HUMAN_TEST = False
+#network.model.save(f'./models/model_{now.strftime("%H:%M:%S")}.h5')
+network.model = load_model('./models/good_model.h5')
+HUMAN_TEST = True
 if HUMAN_TEST:
     agent = Small_Agent(network)
     env.game_play(agent, network)

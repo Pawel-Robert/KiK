@@ -13,7 +13,7 @@ class Small_Agent:
         """ Choose best action. Returns action and corresponding Q-value """
         del player
         q_values = [self.network.evaluate(state, action) for action in legal_actions]
-        max_id = np.argmax(q_values)
+        max_id = np.argmax(np.array([q_values]))
         return legal_actions[max_id], q_values[max_id]
 
 
@@ -24,6 +24,7 @@ class Small_Agent_Explorator(Small_Agent):
         self.epsilon = epsilon
 
     def act(self, state, legal_actions, player, iteration=1):
+        """ As in super with additional randomness. """
         if np.random.random() < self.epsilon / np.sqrt(iteration):
             action = np.random.choice(legal_actions)
             current_q_value = self.network.evaluate(state, action)
@@ -73,9 +74,8 @@ class Heuristic_Agent:
                 return action, 0
         for action in legal_actions:
             temporal_board = np.copy(state)
-            y_position = action // self.width  # bierzemy podłogę z dzielenia
-            x_position = action - y_position * self.width  # reszta z dzielenia
-            # aktualizujemy stan planszy
+            y_position = action // self.width
+            x_position = action - y_position * self.width
             temporal_board[y_position, x_position] = -player
             if self.check_win(temporal_board, - player):
                 return action, 0
