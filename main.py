@@ -16,8 +16,8 @@ network = QValue()
 runner = Runner(Small_Agent_Explorator, BellmanAlgorithm, network, env, 0.1, 100)
 # runner.run(100, 500, None, 1)
 now = datetime.now().time()
-#network.model.save(f'./models/model_{now.strftime("%H:%M:%S")}.h5')
-network.model = load_model('./models/good_model.h5')
+network.model.save(f'./models/model_{now.strftime("%H:%M:%S")}.h5')
+# network.model = load_model('./models/good_model.h5')
 HUMAN_TEST = True
 if HUMAN_TEST:
     agent = Small_Agent(network)
