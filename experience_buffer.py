@@ -24,13 +24,13 @@ class ExperienceBuffer:
             q_value = np.array([algorithm.q_value(current_value, nxt_value, nxt[3], nxt[4],
                                                   self.alpha, self.gamma)])
             state = current[0]
-            action = np.zeros(9)
-            action[current[1]] = 1
+            action = np.zeros(state.shape)
+            action[current[1] // state.shape[0], current[1] % state.shape[1]] = 1
             self.data.append([[state, action], q_value])
 
     def prepare_training_data(self):
         """Here we calculate targets for neural networks, i.e. pairs (x, y) to train on."""
-        states_and_actions = [np.array([x[0][0].flatten() for x in self.data]),
+        states_and_actions = [np.array([x[0][0] for x in self.data]),
                               np.array([x[0][1] for x in self.data])]
         values = np.array([x[1] for x in self.data])
         return states_and_actions, values

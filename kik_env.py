@@ -7,7 +7,7 @@ import time
 #import tensorflow as tf
 
 
-class GomokuEnv():
+class KiKEnv():
     """ Tic tac toe environemet. """
     #metadata = {'render.modes': ['human']}
 

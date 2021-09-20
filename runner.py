@@ -62,10 +62,10 @@ class Runner:
             state_and_actions, q_values = self.buffer.prepare_training_data()
             self.network.model.fit(state_and_actions, q_values)
             print('Fitting finished')
-            if num % 10 == 0:
-                target_network = self.network
+            #if num % 10 == 0:
+            target_network = self.network
 
             self.buffer.clear_buffer()
-            self.tester.test_against_random(self.network)
+            # 2self.tester.test_against_random(self.network)
 
         print(f'Training finished.')

@@ -13,14 +13,14 @@ class Tester:
         network_wins = 0
         heuristic_wins = 0
         agent = Small_Agent(network)
-        for i in range(100):
+        for i in range(10):
             network_score, heuristic_score = self.run_one_episode_against_random(agent, i)
             network_wins += network_score
             heuristic_wins += heuristic_score
         print('\n TESTING PERCENTAGES:')
-        print(f'Network wins: {network_wins} %')
-        print(f'Heuristic wins: {heuristic_wins} %')
-        draws = 100 - network_wins - heuristic_wins
+        print(f'Network wins: {network_wins}0 %')
+        print(f'Heuristic wins: {heuristic_wins}0 %')
+        draws = 100 - 10*network_wins - 10*heuristic_wins
         print(f'Draws: {draws} %')
 
     def compute_error(self, q_values, reward):

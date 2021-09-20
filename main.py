@@ -7,14 +7,14 @@ from datetime import datetime
 from kik_env import KiKEnv
 from tensorflow.keras.models import load_model
 
-WIDTH = 3
-HEIGHT = 3
-WIN_CND = 3
+WIDTH = 10
+HEIGHT = 10
+WIN_CND = 4
 
 env = KiKEnv(WIDTH, HEIGHT, WIN_CND)
-network = QValue()
+network = QValue(WIDTH, HEIGHT)
 runner = Runner(Small_Agent_Explorator, BellmanAlgorithm, network, env, 0.1, 100)
-# runner.run(100, 500, None, 1)
+runner.run(10, 50, None, 1)
 now = datetime.now().time()
 network.model.save(f'./models/model_{now.strftime("%H:%M:%S")}.h5')
 # network.model = load_model('./models/good_model.h5')
