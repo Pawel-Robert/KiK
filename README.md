@@ -1,23 +1,10 @@
 # KiK
-Gra w kółko i krzyżyk na dużej planszy. Gracze na przemian stawiają swoje znaki. Wygrywa ten, kto pierwszy uzyska pięć znaków w rzędzie, kolumnie bądź skośnie. Celem jest wytrenowanie sztucznej inteligencji za pomocą metod uczenia ze wzmocnieniem, która będzie ogrywała ludzi. Rozmiar planszy jest regulowany parametrami width oraz height (domyślnie 10 na 10). (Dalsze rozwinięcie gry może polegać na regulacji kształtu, którego narysowanie na planszy daje wygraną.)
 
-Język: Python
+The purpose of this project is to train a neural network, which will be able to compete with humans in the game of Gomoku. This is a Japanese game, which is similar to tic-tac-toe, however player on a big board (typically 15x15 spaces). Reinforcement learning algorithm, which is going to be used in this purpose is Monte Carlo Tree Search, implemented as in the AlphaGo project. 
 
-Biblioteki: tensorflow, numpy
+Currently woriking version is in the branch "Target Network". It is special case of 3x3 board (tic-tac-toe) trained using DQN algorithm (Q learning via Bellman equation combined with deep neural network).
 
-Algorytm przeszukiwania drzewa: MCTS
 
-Metoda uczenia: policy learning
+Language: Python
 
-W tracie uczenia dwóch graczy gra przeciwko sobie wykorzystując sieć do wyboru sowjego ruchu. Na podstawie wyborów gracza nr 1 (oraz jego ewentulanej wygranej/porażki) aktualizujemy parametry sieci w kroku treningowym. Jeden krok treningowy odpowiada jednej rozgrywce.
-
-Architektura sieci: 
-
-          Conv2D(filters=24, kernel_size=(3, 3), activation=tf.nn.relu),
-          MaxPool2D(pool_size=(2, 2)),
-          Conv2D(filters=36, kernel_size=(3, 3), activation=tf.nn.relu),
-          MaxPool2D(pool_size=(2, 2)),
-          Flatten(),
-          Dense(128, activation=tf.nn.relu),
-          Dense(n_actions, activation=tf.nn.softmax)
-
+Libraries: tensorflow, numpy.
