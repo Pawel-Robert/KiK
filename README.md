@@ -1,6 +1,9 @@
 # KiK
 
-Tic-tac-toe on a big board. The size of the board is adjustable, as well as the number of marks in line necessary to win the game.
+The purpose of this project is to train a neural network, which will be able to compete with humans in the game of Gomoku. This is a Japanese game, which is similar to tic-tac-toe, however player on a big board (typically 15x15 spaces). Reinforcement learning algorithm, which is going to be used in this purpose is Monte Carlo Tree Search, implemented as in the AlphaGo project. 
+
+Currently woriking version is in the branch "Target Network". It is special case of 3x3 board (tic-tac-toe) trained using DQN algorithm (Q learning via Bellman equation combined with deep neural network).
+
 
 Language: Python
 
