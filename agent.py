@@ -4,32 +4,65 @@ import numpy as np
 # from MCTS import MonteCarloTreeSearch
 
 
-class Small_Agent:
+class Agent:
     """Base class for Agent for a 3x3 board (requires flattening of the input). No randomness."""
     def __init__(self, network):
         self.network = network
 
-    def act(self, state, legal_actions, player):
+    def act(self, state, legal_actions, num_samples=20, iteration=1):
         """ Choose best action. Returns action and corresponding Q-value """
-        del player
+        del num_samples, iteration
         q_values = [self.network.evaluate(state, action) for action in legal_actions]
         max_id = np.argmax(np.array([q_values]))
         return legal_actions[max_id], q_values[max_id]
 
-
-class Small_Agent_Explorator(Small_Agent):
+class AgentExplorator(Agent):
     """Base class for Agent for a 3x3 board with randomness."""
     def __init__(self, network, epsilon):
         super().__init__(network)
         self.epsilon = epsilon
 
-    def act(self, state, legal_actions, player, iteration=1):
+    def act(self, state, legal_actions, num_samples=20, iteration=1):
         """ As in super with additional randomness. """
+        del num_samples
         if np.random.random() < self.epsilon / np.sqrt(iteration):
             action = np.random.choice(legal_actions)
             current_q_value = self.network.evaluate(state, action)
             return action, current_q_value
         return super().act(state, legal_actions, player)
+
+class PolicyAgent(Agent):
+    """ Agent for the value network. """
+    def __init__(self, q_network, policy_network):
+        super().__init__(q_network)
+        self.policy_network = policy_network
+
+    def act(self, state, legal_actions, num_samples=20, iteration=1):
+        """ As in super with additional randomness and policy sampling. """
+        logits = np.array(self.policy_network.evaluate(state)[0])
+        # print(logits)
+        logits = [logits[action] + 0.01 for action in legal_actions]
+        logits = logits/sum(logits)
+        sample_actions = [np.random.choice(legal_actions, p=logits) for _ in range(num_samples)]
+        q_values = [self.network.evaluate(state, action)+1 for action in sample_actions]
+        max_id = np.argmax(np.array([q_values]))
+        return legal_actions[max_id], q_values[max_id], sample_actions, q_values
+
+class PolicyAgentExplorator(PolicyAgent):
+    """ Agent for the value network. """
+    def __init__(self, q_network, policy_network, epsilon):
+        super().__init__(q_network, policy_network)
+        self.epsilon = epsilon
+
+    def act(self, state, legal_actions, num_samples=20, iteration=1):
+        """ As in super with additional randomness and policy sampling. """
+        if np.random.random() < self.epsilon / np.sqrt(iteration):
+            action = np.random.choice(legal_actions)
+            current_q_value = self.network.evaluate(state, action)
+            p = 1./len(legal_actions)
+            q_values = [p for _ in range(len(legal_actions))]
+            return action, current_q_value, legal_actions, q_values
+        return super().act(state, legal_actions, num_samples, iteration)
 
 
 class Heuristic_Agent:

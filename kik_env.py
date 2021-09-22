@@ -178,9 +178,8 @@ class KiKEnv():
             return action
 
 
-    def main_loop(self, mod, agent, network):
+    def main_loop(self, mod, agent):
         """ Main gameplay loop."""
-        del network
         while True:
             if not self.legal_actions():
                 break
@@ -195,7 +194,7 @@ class KiKEnv():
                     action = self.human_input()
                 else:
                     """ Take AI action. """
-                    action, q_value = agent.act(self.board, self.legal_actions(), self.player)
+                    action, q_value, _, _ = agent.act(self.board, self.legal_actions())
                     print_q_value = format(q_value, '.2f')
                     print(f'Komputer wykonał ruch {action} o wartości {print_q_value}')
             elif mod == '3':
@@ -238,7 +237,7 @@ class KiKEnv():
                 # time.sleep(2)
                 break
 
-    def game_play(self, agent, network):
+    def game_play(self, agent):
         """" Game play! """
         self.print_game_menu()
         while True:
@@ -246,7 +245,7 @@ class KiKEnv():
             mod = input()
             self.reset()
             """ Main game loop. """
-            self.main_loop(mod, agent, network)
+            self.main_loop(mod, agent)
 
 
     def random_play(self, moves_limit = None):

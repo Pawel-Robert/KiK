@@ -1,10 +1,11 @@
 """ Main file. """
-from q_network import QValue
+from networks import QValue, PolicyNetwork
 from runner import Runner
-from agent import Small_Agent_Explorator, Small_Agent
+from agent import AgentExplorator, Agent, PolicyAgentExplorator, PolicyAgent
 from training_algorithms import BellmanAlgorithm
 from datetime import datetime
 from kik_env import KiKEnv
+import numpy as np
 from tensorflow.keras.models import load_model
 
 WIDTH = 10
@@ -13,15 +14,16 @@ WIN_CND = 4
 
 env = KiKEnv(WIDTH, HEIGHT, WIN_CND)
 network = QValue(WIDTH, HEIGHT)
-runner = Runner(Small_Agent_Explorator, BellmanAlgorithm, network, env, 0.1, 100)
-runner.run(10, 50, None, 1)
+policy = PolicyNetwork(WIDTH, HEIGHT)
+runner = Runner(PolicyAgentExplorator, BellmanAlgorithm, network, policy, env, 0.1, 100)
+runner.run(50, 100, None, 1)
 now = datetime.now().time()
-network.model.save(f'./models/model_{now.strftime("%H:%M:%S")}.h5')
+network.model.save(f'./models_big/model_{now.strftime("%H:%M:%S")}.h5')
 # network.model = load_model('./models/good_model.h5')
 HUMAN_TEST = True
 if HUMAN_TEST:
-    agent = Small_Agent(network)
-    env.game_play(agent, network)
+    agent = PolicyAgent(network, policy)
+    env.game_play(agent)
 
 
 

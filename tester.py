@@ -1,7 +1,7 @@
 """ Tester. """
 
 from numpy import random, sqrt
-from agent import Small_Agent
+from agent import Agent
 
 class Tester:
     """ Tester. """
@@ -12,7 +12,7 @@ class Tester:
         """ Test against heuristics. """
         network_wins = 0
         heuristic_wins = 0
-        agent = Small_Agent(network)
+        agent = Agent(network)
         for i in range(10):
             network_score, heuristic_score = self.run_one_episode_against_random(agent, i)
             network_wins += network_score
