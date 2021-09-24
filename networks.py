@@ -1,4 +1,4 @@
-""" Network class. """
+""" Network classes. """
 
 from keras.layers import Input, Dense, Concatenate, Conv2D, MaxPool2D, Flatten
 from keras.models import Model
@@ -37,6 +37,18 @@ class QValue:
         action_array = np.zeros((self.height, self.width))
         action_array[action // self.width, action % self.width] = 1
         return self.model([np.array([state]), np.array([action_array])])[0][0]
+
+    def evaluate_on_batch(self, state, list_of_actions):
+        """ Returns the output of the network for specific state and a list of actions. """
+        list_of_states = []
+        list_of_action_arrays = []
+        for action in list_of_actions:
+            action_array = np.zeros((self.height, self.width))
+            action_array[action // self.width, action % self.width] = 1
+            list_of_action_arrays.append(action_array)
+            list_of_states.append(state)
+        return self.model.predict_on_batch([np.array(list_of_states), np.array(list_of_action_arrays)])
+
 
 class PolicyNetwork:
     """ Policy network used to sample actions for QNetwork. """

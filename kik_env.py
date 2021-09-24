@@ -194,7 +194,7 @@ class KiKEnv():
                     action = self.human_input()
                 else:
                     """ Take AI action. """
-                    action, q_value, _, _ = agent.act(self.board, self.legal_actions())
+                    action, q_value = agent.act(self.board, self.legal_actions())
                     print_q_value = format(q_value, '.2f')
                     print(f'Komputer wykonał ruch {action} o wartości {print_q_value}')
             elif mod == '3':

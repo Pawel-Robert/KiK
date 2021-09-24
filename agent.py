@@ -6,20 +6,21 @@ import numpy as np
 
 class Agent:
     """Base class for Agent for a 3x3 board (requires flattening of the input). No randomness."""
-    def __init__(self, network):
+    def __init__(self, network, policy):
+        del policy
         self.network = network
 
     def act(self, state, legal_actions, num_samples=20, iteration=1):
         """ Choose best action. Returns action and corresponding Q-value """
         del num_samples, iteration
-        q_values = [self.network.evaluate(state, action) for action in legal_actions]
+        q_values = self.network.evaluate_on_batch(state, legal_actions)
         max_id = np.argmax(np.array([q_values]))
-        return legal_actions[max_id], q_values[max_id]
+        return legal_actions[max_id], q_values[max_id][0]
 
 class AgentExplorator(Agent):
     """Base class for Agent for a 3x3 board with randomness."""
-    def __init__(self, network, epsilon):
-        super().__init__(network)
+    def __init__(self, network, policy, epsilon):
+        super().__init__(network, policy)
         self.epsilon = epsilon
 
     def act(self, state, legal_actions, num_samples=20, iteration=1):
@@ -29,7 +30,7 @@ class AgentExplorator(Agent):
             action = np.random.choice(legal_actions)
             current_q_value = self.network.evaluate(state, action)
             return action, current_q_value
-        return super().act(state, legal_actions, player)
+        return super().act(state, legal_actions)
 
 class PolicyAgent(Agent):
     """ Agent for the value network. """

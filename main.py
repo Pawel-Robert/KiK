@@ -14,15 +14,16 @@ WIN_CND = 4
 
 env = KiKEnv(WIDTH, HEIGHT, WIN_CND)
 network = QValue(WIDTH, HEIGHT)
+network.model = load_model('./models_big/model_16:02:42.h5')
 policy = PolicyNetwork(WIDTH, HEIGHT)
-runner = Runner(PolicyAgentExplorator, BellmanAlgorithm, network, policy, env, 0.1, 100)
-runner.run(50, 100, None, 1)
+runner = Runner(AgentExplorator, BellmanAlgorithm, network, policy, env, 0.1, 100)
+runner.run(200, 500, None, 1)
 now = datetime.now().time()
 network.model.save(f'./models_big/model_{now.strftime("%H:%M:%S")}.h5')
-# network.model = load_model('./models/good_model.h5')
+
 HUMAN_TEST = True
 if HUMAN_TEST:
-    agent = PolicyAgent(network, policy)
+    agent = Agent(network, policy)
     env.game_play(agent)
 
 

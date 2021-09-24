@@ -34,12 +34,11 @@ class Runner:
         while True:
             if self.env.legal_actions():
                 state = copy(self.env.board)
-                action, q_value, sample_actions, q_values = \
-                    self.agent.act(state * self.env.player, self.env.legal_actions())
+                action, q_value = self.agent.act(state * self.env.player, self.env.legal_actions())
                 next_observation, reward, done, _ = self.env.step(action)
                 if self.env.player * swap_const == ai_player:
                     trajectory.append([state, action, q_value, 0, False])
-                    policy_trajectory.append([state, sample_actions, q_values])
+                    # policy_trajectory.append([state, sample_actions, q_values])
                 if done:
                     trajectory.append([state, action, q_value, reward, True])
                     break
@@ -59,15 +58,15 @@ class Runner:
             print(f'Processing step = {num+1}')
 
             for _ in tqdm(range(episodes_in_batch)):
-                trajectory, policy_trajectory = self.run_one_episode(num)
+                trajectory, _ = self.run_one_episode(num)
                 self.buffer.add_trajectory(trajectory, self.algorithm, self.network)
-                self.buffer.add_policy_trajectory(policy_trajectory)
+                # self.buffer.add_policy_trajectory(policy_trajectory)
             print(f'Length of data in the buffer = {len(self.buffer.data)}')
 
             state_and_actions, q_values = self.buffer.prepare_training_data()
             self.network.model.fit(state_and_actions, q_values)
-            states, distributions = self.buffer.prepare_policy_data()
-            self.policy.model.fit(states, distributions)
+            # states, distributions = self.buffer.prepare_policy_data()
+            # self.policy.model.fit(states, distributions)
             print('Fitting finished')
 
             self.buffer.clear_buffer()
