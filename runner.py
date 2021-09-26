@@ -20,15 +20,14 @@ class Runner:
 
     def run_one_episode(self, iteration):
         """Plays one game AGAINST ITSELF and returns a trajectory of one player.
-         The Agent always acts as it would be player 1 (using illusion mechanism).
          In case of a draw, the loops ans and we store the reward.
          Remark: function step changes the player. We store the trajectory of player 1 only.
          The purpose of the policy trajectory is to gather training data for the policy network. """
         del iteration
-        ai_player = 1
+        ai_player = 1 # agent always acts as it would be player 1 (using illusion mechanism)
         swap_const = -1
         trajectory = []
-        policy_trajectory = []
+        # policy_trajectory = []
         self.env.player = random.choice([-1,1]) # randomize initial player
         self.env.reset()
         while True:
@@ -40,12 +39,12 @@ class Runner:
                     trajectory.append([state, action, q_value, 0, False])
                     # policy_trajectory.append([state, sample_actions, q_values])
                 if done:
-                    trajectory.append([state, action, q_value, reward, True])
+                    trajectory.append([copy(next_observation), action, q_value, reward, True])
                     break
             else:
                 trajectory.append([state, 0, 0, 0, True])
                 break
-        return trajectory, policy_trajectory
+        return trajectory#, policy_trajectory
 
 
     def run(self, n_iterations, episodes_in_batch, data_size, epochs):
@@ -58,13 +57,13 @@ class Runner:
             print(f'Processing step = {num+1}')
 
             for _ in tqdm(range(episodes_in_batch)):
-                trajectory, _ = self.run_one_episode(num)
+                trajectory = self.run_one_episode(num)
                 self.buffer.add_trajectory(trajectory, self.algorithm, self.network)
                 # self.buffer.add_policy_trajectory(policy_trajectory)
             print(f'Length of data in the buffer = {len(self.buffer.data)}')
 
-            state_and_actions, q_values = self.buffer.prepare_training_data()
-            self.network.model.fit(state_and_actions, q_values)
+            states, q_values = self.buffer.prepare_training_data()
+            self.network.model.fit(states, q_values)
             # states, distributions = self.buffer.prepare_policy_data()
             # self.policy.model.fit(states, distributions)
             print('Fitting finished')

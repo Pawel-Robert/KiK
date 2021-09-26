@@ -1,5 +1,5 @@
 """ Main file. """
-from networks import QValue, PolicyNetwork
+from networks import ValueNetwork, PolicyNetwork
 from runner import Runner
 from agent import AgentExplorator, Agent, PolicyAgentExplorator, PolicyAgent
 from training_algorithms import BellmanAlgorithm
@@ -8,20 +8,24 @@ from kik_env import KiKEnv
 import numpy as np
 from tensorflow.keras.models import load_model
 
-WIDTH = 10
-HEIGHT = 10
-WIN_CND = 4
+WIDTH = 13
+HEIGHT = 13
+WIN_CND = 5
+META_ITERATIONS = 1
+ITERATIONS = 500
+EPISODES = 100
+HUMAN_TEST = True
 
 env = KiKEnv(WIDTH, HEIGHT, WIN_CND)
-network = QValue(WIDTH, HEIGHT)
-network.model = load_model('./models_big/model_16:02:42.h5')
+network = ValueNetwork(WIDTH, HEIGHT)
+network.model = load_model('./models_big/model_19:11:57.h5')
 policy = PolicyNetwork(WIDTH, HEIGHT)
-runner = Runner(AgentExplorator, BellmanAlgorithm, network, policy, env, 0.1, 100)
-runner.run(200, 500, None, 1)
-now = datetime.now().time()
-network.model.save(f'./models_big/model_{now.strftime("%H:%M:%S")}.h5')
+runner = Runner(AgentExplorator, BellmanAlgorithm, network, policy, env, 0.2, 100)
+for _ in range(META_ITERATIONS):
+    runner.run(ITERATIONS, EPISODES, None, 1)
+    now = datetime.now().time()
+    network.model.save(f'./models_big/model_{now.strftime("%H:%M:%S")}.h5')
 
-HUMAN_TEST = True
 if HUMAN_TEST:
     agent = Agent(network, policy)
     env.game_play(agent)

@@ -198,15 +198,12 @@ class KiKEnv():
                     print_q_value = format(q_value, '.2f')
                     print(f'Komputer wykonał ruch {action} o wartości {print_q_value}')
             elif mod == '3':
-                action, q_value = agent.act(self.player_board(1), self.player_board(2), )
-                print_q_value = format(q_value,'.2f')
+                action, q_value = agent.act(self.board * self.env.player, self.legal_actions())
+                print_q_value = format(q_value, '.2f')
                 if self.player == 1:
                     print(f'Gracz komputerowy O wykonał ruch {action} o wartości {print_q_value}')
                 else:
                     print(f'Gracz komputerowy X wykonał ruch {action} o wartości {print_q_value}')
-                if action not in self.legal_actions():
-                    for _ in range(1000):
-                        print('Ruch niedozwolony!')
             elif mod == '4':
                 """ MCTS Agent. """
                 if self.player == -1:

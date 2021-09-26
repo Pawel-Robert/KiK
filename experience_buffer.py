@@ -26,15 +26,14 @@ class ExperienceBuffer:
                                                   self.alpha, self.gamma)])
             state = current[0]
             action = np.zeros(state.shape)
-            action[current[1] // state.shape[0], current[1] % state.shape[1]] = 1
-            self.data.append([[state, action], q_value])
+            state[current[1] // state.shape[0], current[1] % state.shape[1]] = 1
+            self.data.append([state, q_value])
 
     def prepare_training_data(self):
         """Here we calculate targets for neural networks, i.e. pairs (x, y) to train on."""
-        states_and_actions = [np.array([x[0][0] for x in self.data]),
-                              np.array([x[0][1] for x in self.data])]
+        states = [np.array([x[0] for x in self.data])]
         values = np.array([x[1] for x in self.data])
-        return states_and_actions, values
+        return states, values
 
     def add_policy_trajectory(self, trajectory):
         """ Adds policy trajectory to the buffer (trajectory = [state, sample_actions, q_values]). """
