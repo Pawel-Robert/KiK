@@ -4,7 +4,7 @@ import numpy as np
 
 
 class Agent:
-    """Base class for Agent for a 3x3 board (requires flattening of the input). No randomness."""
+    """Base class for Agent. No randomness."""
 
     def __init__(self, network):
         self.network = network
@@ -18,7 +18,7 @@ class Agent:
 
 
 class AgentExplorator(Agent):
-    """Base class for Agent for a 3x3 board with randomness."""
+    """Base class for Agent with randomness."""
 
     def __init__(self, network, epsilon):
         super().__init__(network)
