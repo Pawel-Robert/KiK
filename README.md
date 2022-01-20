@@ -1,6 +1,6 @@
 # KiK
 
-The purpose of this project is to train a neural network, which will be able to compete with humans in the game of Gomoku. This is a Japanese game, which is similar to tic-tac-toe, however player on a big board (for example 13x13 spaces) and to win the game it is necessary to get 5 marks in a line. The environement of the game is implemented in the file "kik_env.py" (acronym "KiK" comes from "kółko i krzyżyk", which means tic-tac-toe in Polish). It is compatible with the OpenAi convention (it contains functions step, render, reset).
+The purpose of this project is to train a neural network, which will be able to compete with humans in the game of Gomoku. This is a Japanese game, which is similar to tic-tac-toe, however player on a big board (for example 13x13 spaces) and to win the game it is necessary to get 5 marks in a line. The environement of the game is implemented in the file "kik_env.py" (acronym "KiK" comes from "kółko i krzyżyk", which means tic-tac-toe in Polish). This environement is compatible with the OpenAI specification (it contains functions: step, render, reset).
 
 Version "ValueNetwork" is the latest one. It uses value network together trained using Bellman equation and is able to beat human occasionally. In the file "good_model.h5" are saved weigths of the of the trained models.
 
