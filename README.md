@@ -1,6 +1,6 @@
 # KiK
 
-This is a personal project in reinforcment learning. Language: Python. Libraries: tensorflow, numpy.
+This is a personal project in reinforcement learning. Language: Python. Libraries: tensorflow, numpy.
 
 The purpose of this project is to train a neural network, which will be able to compete with humans in the game of Gomoku. This is a Japanese game, which is similar to tic-tac-toe, however player on a big board (for example 13x13 spaces) and to win the game it is necessary to get 5 marks in a line. The environement of the game is implemented in the file "kik_env.py" (acronym "KiK" comes from "kółko i krzyżyk", which means tic-tac-toe in Polish). This environement class is compatible with the OpenAI specification (it contains functions: step, render, reset).
 
